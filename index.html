@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE Fire Mission Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --text: #1a1a18;
+    --text2: #555550;
+    --text3: #888880;
+    --danger: #c0392b;
+    --warning: #a05000;
+    --info-bg: #e6f1fb;
+    --info-text: #0c447c;
+    --radius: 10px;
+    --radius-sm: 7px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2e2e2b;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --text: #f0ede8;
+      --text2: #aaa89f;
+      --text3: #666660;
+      --danger: #e05a4a;
+      --warning: #e08030;
+      --info-bg: #0c2a42;
+      --info-text: #7ab8f5;
+    }
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header .icon {
+    width: 36px;
+    height: 36px;
+    background: #2c2c2a;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  header .icon svg { width: 20px; height: 20px; fill: #e8e0c8; }
+
+  header h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+  header p { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+  .container { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  .sec-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 12px;
+  }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  @media (max-width: 420px) {
+    .row3 { grid-template-columns: 1fr 1fr; }
+    .row3 .field:last-child { grid-column: 1 / -1; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+
+  .field label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .field input, .field select {
+    font-size: 15px;
+    padding: 8px 10px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .field input:focus, .field select:focus {
+    border-color: #4a7fc1;
+    box-shadow: 0 0 0 3px rgba(74,127,193,0.15);
+  }
+
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+  }
+
+  .hint {
+    font-size: 10px;
+    color: var(--text3);
+    line-height: 1.4;
+    margin-top: 2px;
+  }
+
+  .wtabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+
+  .wtab {
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text2);
+    transition: all 0.12s;
+    user-select: none;
+  }
+
+  .wtab:hover { background: var(--surface2); }
+
+  .wtab.active {
+    background: #2c2c2a;
+    color: #e8e0c8;
+    border-color: #2c2c2a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .wtab.active { background: #e8e0c8; color: #1a1a18; border-color: #e8e0c8; }
+  }
+
+  .btn-calc {
+    width: 100%;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius);
+    border: none;
+    background: #2c3e50;
+    color: #e8e0c8;
+    margin-top: 4px;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-calc:hover { background: #1a252f; }
+  .btn-calc:active { transform: scale(0.98); }
+
+  @media (prefers-color-scheme: dark) {
+    .btn-calc { background: #e8e0c8; color: #1a1a18; }
+    .btn-calc:hover { background: #d4ccb4; }
+  }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+
+  .metric {
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+
+  .metric-lbl { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .metric-val { font-size: 24px; font-weight: 700; font-family: 'Courier New', monospace; color: var(--text); line-height: 1.1; }
+  .metric-unit { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  .charge-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .charge-label { font-size: 12px; color: var(--text2); }
+
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  .info-note {
+    font-size: 12px;
+    color: var(--info-text);
+    background: var(--info-bg);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+
+  .err { font-size: 13px; color: var(--danger); margin-top: 10px; font-weight: 500; }
+  .warn { font-size: 12px; color: var(--warning); margin-top: 6px; font-weight: 500; }
+
+  .log-btn {
+    display: inline-block;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    transition: background 0.12s;
+    margin-top: 12px;
+  }
+
+  .log-btn:hover { background: var(--surface2); }
+
+  .log-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .clear-btn {
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--text2);
+    transition: background 0.12s;
+  }
+
+  .clear-btn:hover { color: var(--danger); }
+
+  .log-entry {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--surface);
+  }
+
+  .log-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .log-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .log-id { font-size: 12px; font-weight: 700; color: var(--text); font-family: 'Courier New', monospace; }
+  .log-weapon { font-size: 11px; color: var(--text3); }
+  .log-custom { font-size: 12px; color: var(--text2); font-style: italic; }
+  .log-time { font-size: 11px; color: var(--text3); }
+
+  .log-remove {
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    padding: 2px 7px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-left: 8px;
+  }
+
+  .log-remove:hover { color: var(--danger); border-color: var(--danger); }
+
+  .log-vals { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .log-val {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .log-val span {
+    font-family: -apple-system, sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text3);
+    margin-right: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .log-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 2rem 0; }
+
+  .section-gap { margin-top: 20px; }
+
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text3);
+    padding: 2rem 1rem 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="icon">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+    </svg>
+  </div>
+  <div>
+    <h1>ACE Fire Mission Calculator</h1>
+    <p>ArmA Reforger &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <p class="sec-label" style="margin-bottom:8px;">Weapon system</p>
+  <div class="wtabs" id="wtabs">
+    <div class="wtab active" data-w="m777">M777 (155mm)</div>
+    <div class="wtab" data-w="m252">M252 (81mm)</div>
+    <div class="wtab" data-w="m224">M224 (60mm)</div>
+    <div class="wtab" data-w="2b14">2B14 (82mm)</div>
+  </div>
+
+  <div class="card">
+    <p class="sec-label" style="margin-bottom:10px;">Gun position</p>
+    <div class="row3" style="margin-bottom:12px;">
+      <div class="field"><label>Easting</label><input type="number" id="gx" placeholder="123" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Northing</label><input type="number" id="gy" placeholder="456" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Altitude (m)</label><input type="number" id="galt" placeholder="150" inputmode="numeric"></div>
+    </div>
+    <p class="sec-label" style="margin-bottom:10px;">Target position</p>
+    <div class="row3">
+      <div class="field"><label>Easting</label><input type="number" id="tx" placeholder="234" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Northing</label><input type="number" id="ty" placeholder="567" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Altitude (m)</label><input type="number" id="talt" placeholder="120" inputmode="numeric"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec-label" style="margin-bottom:10px;">ACE wind &mdash; vector components</p>
+    <div class="row2">
+      <div class="field">
+        <label>Headwind (m/s)</label>
+        <input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal">
+        <div class="hint">+ toward gun &nbsp;|&nbsp; &minus; toward target</div>
+      </div>
+      <div class="field">
+        <label>Crosswind (m/s)</label>
+        <input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal">
+        <div class="hint">+ from left &nbsp;|&nbsp; &minus; from right</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="charge-card">
+    <p class="sec-label" style="margin-bottom:10px;">Charge / propellant</p>
+    <div class="field">
+      <label>Select charge</label>
+      <select id="charge-sel"></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec-label" style="margin-bottom:10px;">Mission label (optional)</p>
+    <div class="field">
+      <input type="text" id="mission-label" placeholder="e.g. T1 — enemy armour treeline">
+    </div>
+  </div>
+
+  <button class="btn-calc" onclick="calculate()">Calculate Fire Mission</button>
+  <div id="err" class="err" style="display:none;"></div>
+
+  <div id="res-wrap" style="display:none;">
+    <div class="divider"></div>
+    <p class="sec-label" style="margin-bottom:12px;">Fire mission data</p>
+    <div class="metrics" id="metrics-grid"></div>
+    <div class="charge-row" id="charge-row" style="display:none;">
+      <span class="charge-label">Charge:</span>
+      <span class="badge" id="r-charge-badge">—</span>
+      <span style="font-size:12px;color:var(--text3);" id="r-charge-range"></span>
+    </div>
+    <div id="r-alt-note" class="info-note" style="display:none;"></div>
+    <div id="r-wind-note" class="info-note" style="display:none; margin-top:6px;"></div>
+    <div id="r-warn" class="warn" style="display:none;"></div>
+    <div style="text-align:right;">
+      <button class="log-btn" onclick="logMission()">+ Log this mission</button>
+    </div>
+  </div>
+
+  <div class="divider section-gap"></div>
+  <div class="log-header-row">
+    <p class="sec-label" style="margin:0;">Mission log</p>
+    <button class="clear-btn" onclick="clearLog()">Clear all</button>
+  </div>
+  <div id="log-list"><div class="log-empty">No missions logged yet.</div></div>
+
+</div>
+
+<footer>ACE Fire Mission Calculator &mdash; ArmA Reforger &mdash; M107 HE ballistic data from in-game tables</footer>
+
+<script>
+const MILS_DEG = 6400 / 360;
+
+const M777_CHARGES = [
+  { name:"Charge 1", color:"#3B6D11", bg:"#d4edbc",
+    table:[[950,1245,24.4,24,0.2],[1000,1221,24.2,24,0.2],[1050,1197,24.0,26,0.3],[1100,1171,23.7,27,0.3],[1150,1144,23.4,29,0.3],[1200,1115,23.1,31,0.4],[1250,1084,22.7,34,0.4],[1300,1050,22.3,39,0.5],[1350,1011,21.8,46,0.6],[1400,965,21.2,58,0.9],[1450,907,20.3,107,1.7],[1500,800,18.6,null,null]]
+  },
+  { name:"Charge 2", color:"#185FA5", bg:"#bcd8f5",
+    table:[[1500,1270,33.1,13,0.1],[1550,1257,33.0,14,0.1],[1600,1243,32.9,14,0.2],[1650,1229,32.7,15,0.2],[1700,1214,32.5,14,0.1],[1750,1200,32.4,15,0.3],[1800,1185,32.1,16,0.2],[1850,1169,31.9,16,0.2],[1900,1153,31.7,17,0.2],[1950,1136,31.5,17,0.3],[2000,1119,31.2,18,0.2],[2050,1101,31.0,19,0.3],[2100,1082,30.7,20,0.4],[2150,1062,30.3,21,0.3],[2200,1041,30.0,23,0.4],[2250,1018,29.6,23,0.4],[2300,995,29.2,28,0.5],[2350,967,28.7,29,0.6],[2400,938,28.1,34,0.6],[2450,904,27.5,44,1.0],[2500,860,26.5,null,null]]
+  },
+  { name:"Charge 3", color:"#993C1D", bg:"#f5c4b3",
+    table:[[2100,1272,41.0,10,0.1],[2200,1253,40.8,10,0.2],[2300,1233,40.5,10,0.2],[2400,1213,40.2,11,0.2],[2500,1192,39.9,11,0.2],[2600,1170,39.5,12,0.2],[2700,1147,39.1,12,0.2],[2800,1123,38.7,13,0.2],[2900,1098,38.3,14,0.3],[3000,1070,37.7,14,0.2],[3100,1042,37.2,16,0.4],[3200,1010,36.5,16,0.3],[3300,975,35.7,18,0.4],[3400,936,34.9,22,0.6],[3500,890,33.7,28,0.7],[3600,828,32.1,null,null]]
+  },
+  { name:"Charge 4", color:"#534AB7", bg:"#cec9f5",
+    table:[[2600,1271,47.2,8,0.1],[2700,1255,47.0,7,0.2],[2800,1240,46.7,8,0.1],[2900,1224,46.5,9,0.2],[3000,1207,46.2,9,0.2],[3100,1190,45.9,9,0.2],[3200,1172,45.6,9,0.2],[3300,1154,45.2,9,0.2],[3400,1135,44.9,9,0.2],[3500,1116,44.5,10,0.2],[3600,1095,44.0,10,0.2],[3700,1074,43.6,11,0.3],[3800,1052,43.1,12,0.3],[3900,1028,42.5,12,0.3],[4000,1003,41.9,14,0.3],[4100,976,41.3,15,0.4],[4200,946,40.5,17,0.5],[4300,912,39.6,17,0.5],[4400,874,38.5,20,0.5],[4500,828,37.2,26,0.8]]
+  },
+  { name:"Charge 5", color:"#854F0B", bg:"#fad4a0",
+    table:[[3000,1271,52.2,7,0.1],[3100,1258,52.0,7,0.1],[3200,1244,51.8,7,0.1],[3300,1230,51.5,7,0.1],[3400,1216,51.3,7,0.1],[3500,1202,51.0,7,0.2],[3600,1187,50.7,7,0.1],[3700,1172,50.4,7,0.1],[3800,1156,50.1,8,0.1],[3900,1140,49.8,7,0.2],[4000,1124,49.4,8,0.2],[4100,1107,49.0,9,0.2],[4200,1089,48.6,9,0.2],[4300,1071,48.2,9,0.2],[4400,1052,47.7,9,0.2],[4500,1032,47.2,10,0.2],[4600,1011,46.7,10,0.2],[4700,989,46.1,10,0.2],[4800,966,45.5,11,0.3],[4900,941,44.7,12,0.3],[5000,913,44.0,13,0.4],[5100,883,43.1,14,0.3],[5200,850,42.0,16,0.5],[5300,809,40.7,20,0.6]]
+  }
+];
+
+const MORTARS = {
+  m252: { label:"M252 (81mm)", windDrift:1.4, windRange:1.8, charges:[
+    {name:"Charge 0",min:73,  max:490, mv:69,  color:"#3B6D11",bg:"#d4edbc"},
+    {name:"Charge 1",min:200, max:900, mv:109, color:"#185FA5",bg:"#bcd8f5"},
+    {name:"Charge 2",min:400, max:1500,mv:147, color:"#993C1D",bg:"#f5c4b3"},
+    {name:"Charge 3",min:700, max:2100,mv:185, color:"#534AB7",bg:"#cec9f5"},
+    {name:"Charge 4",min:1000,max:3000,mv:225, color:"#854F0B",bg:"#fad4a0"},
+    {name:"Charge 5",min:1500,max:4000,mv:273, color:"#A32D2D",bg:"#f5b8b8"},
+    {name:"Charge 6",min:2000,max:5608,mv:320, color:"#444441",bg:"#d8d6ce"},
+  ]},
+  m224: { label:"M224 (60mm)", windDrift:1.8, windRange:2.2, charges:[
+    {name:"Charge 0",min:40, max:330, mv:55, color:"#3B6D11",bg:"#d4edbc"},
+    {name:"Charge 1",min:100,max:600, mv:89, color:"#185FA5",bg:"#bcd8f5"},
+    {name:"Charge 2",min:200,max:900, mv:120,color:"#993C1D",bg:"#f5c4b3"},
+    {name:"Charge 3",min:400,max:1200,mv:150,color:"#534AB7",bg:"#cec9f5"},
+    {name:"Charge 4",min:700,max:1800,mv:185,color:"#854F0B",bg:"#fad4a0"},
+    {name:"Charge 5",min:1000,max:2490,mv:218,color:"#444441",bg:"#d8d6ce"},
+  ]},
+  "2b14": { label:"2B14 Podnos (82mm)", windDrift:1.5, windRange:1.9, charges:[
+    {name:"Charge 0",min:80, max:520, mv:72, color:"#3B6D11",bg:"#d4edbc"},
+    {name:"Charge 1",min:250,max:950, mv:115,color:"#185FA5",bg:"#bcd8f5"},
+    {name:"Charge 2",min:450,max:1600,mv:155,color:"#993C1D",bg:"#f5c4b3"},
+    {name:"Charge 3",min:750,max:2200,mv:196,color:"#534AB7",bg:"#cec9f5"},
+    {name:"Charge 4",min:1100,max:3000,mv:238,color:"#854F0B",bg:"#fad4a0"},
+    {name:"Charge 5",min:1600,max:4270,mv:282,color:"#444441",bg:"#d8d6ce"},
+  ]}
+};
+
+let activeWeapon = "m777";
+let lastResult = null;
+let missionLog = [];
+let missionCounter = 1;
+
+function interp(table, dist) {
+  if (dist <= table[0][0]) return [...table[0]];
+  if (dist >= table[table.length-1][0]) return [...table[table.length-1]];
+  for (let i = 0; i < table.length - 1; i++) {
+    const a = table[i], b = table[i+1];
+    if (dist >= a[0] && dist <= b[0]) {
+      const t = (dist - a[0]) / (b[0] - a[0]);
+      return [
+        dist,
+        Math.round(a[1] + (b[1]-a[1])*t),
+        parseFloat((a[2] + (b[2]-a[2])*t).toFixed(1)),
+        (a[3]!=null && b[3]!=null) ? parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)) : null,
+        (a[4]!=null && b[4]!=null) ? parseFloat((a[4]+(b[4]-a[4])*t).toFixed(1)) : null
+      ];
+    }
+  }
+  return [...table[table.length-1]];
+}
+
+function findBestM777Charge(dist) {
+  for (const c of M777_CHARGES) {
+    const min = c.table[0][0], max = c.table[c.table.length-1][0];
+    if (dist >= min && dist <= max) return c;
+  }
+  return null;
+}
+
+function buildChargeSelect() {
+  const sel = document.getElementById("charge-sel");
+  sel.innerHTML = "";
+  const auto = document.createElement("option");
+  auto.value = "auto";
+  auto.textContent = "Auto (lowest valid charge)";
+  sel.appendChild(auto);
+
+  if (activeWeapon === "m777") {
+    M777_CHARGES.forEach((c, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      const min = c.table[0][0], max = c.table[c.table.length-1][0];
+      opt.textContent = `${c.name}  (${min}–${max} m)`;
+      sel.appendChild(opt);
+    });
+  } else {
+    MORTARS[activeWeapon].charges.forEach((c, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `${c.name}  (${c.min}–${c.max} m)`;
+      sel.appendChild(opt);
+    });
+  }
+}
+
+document.getElementById("wtabs").addEventListener("click", e => {
+  const tab = e.target.closest(".wtab");
+  if (!tab) return;
+  document.querySelectorAll(".wtab").forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  activeWeapon = tab.dataset.w;
+  buildChargeSelect();
+  document.getElementById("res-wrap").style.display = "none";
+  document.getElementById("err").style.display = "none";
+  lastResult = null;
+});
+
+buildChargeSelect();
+
+function gv(id) { return parseFloat(document.getElementById(id).value); }
+
+function elevMilsMortar(dist, altDiff, mv) {
+  const g = 9.81, vSq = mv*mv, d = dist, h = altDiff;
+  const disc = vSq*vSq - g*(g*d*d + 2*h*vSq);
+  if (disc < 0) return null;
+  const rad = Math.atan((vSq - Math.sqrt(disc)) / (g*d));
+  return Math.round(rad * (180/Math.PI) * MILS_DEG);
+}
+
+function calculate() {
+  const errEl = document.getElementById("err");
+  const resEl = document.getElementById("res-wrap");
+  errEl.style.display = "none";
+  resEl.style.display = "none";
+  lastResult = null;
+
+  const gx = gv("gx"), gy = gv("gy"), galt = gv("galt");
+  const tx = gv("tx"), ty = gv("ty"), talt = gv("talt");
+  const hw = isNaN(gv("hw")) ? 0 : gv("hw");
+  const cw = isNaN(gv("cw")) ? 0 : gv("cw");
+
+  if ([gx,gy,galt,tx,ty,talt].some(v => isNaN(v))) {
+    errEl.textContent = "All position and altitude fields are required.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  const dx = (tx - gx) * 100, dy = (ty - gy) * 100;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const altDiff = talt - galt;
+  let bearDeg = Math.atan2(dx, dy) * (180 / Math.PI);
+  if (bearDeg < 0) bearDeg += 360;
+
+  const warnEl = document.getElementById("r-warn");
+  const windNoteEl = document.getElementById("r-wind-note");
+  const altNoteEl = document.getElementById("r-alt-note");
+  const chargeRowEl = document.getElementById("charge-row");
+  warnEl.style.display = "none";
+  windNoteEl.style.display = "none";
+  altNoteEl.style.display = "none";
+  chargeRowEl.style.display = "none";
+
+  const metricsEl = document.getElementById("metrics-grid");
+  metricsEl.innerHTML = "";
+
+  function addMetric(lbl, val, unit) {
+    metricsEl.innerHTML += `<div class="metric"><div class="metric-lbl">${lbl}</div><div class="metric-val">${val}</div><div class="metric-unit">${unit}</div></div>`;
+  }
+
+  const chargeSelVal = document.getElementById("charge-sel").value;
+  const weaponLabel = activeWeapon === "m777" ? "M777 (155mm)" : MORTARS[activeWeapon].label;
+  let result = { weapon: weaponLabel, dist: Math.round(dist), bearDeg, label: document.getElementById("mission-label").value.trim(), hw, cw };
+
+  addMetric("Distance", Math.round(dist).toLocaleString(), "meters");
+  addMetric("Bearing", bearDeg.toFixed(1) + "°", "degrees true");
+
+  if (activeWeapon === "m777") {
+    let charge = chargeSelVal === "auto" ? findBestM777Charge(dist) : M777_CHARGES[parseInt(chargeSelVal)];
+
+    if (!charge) {
+      warnEl.textContent = `Distance ${Math.round(dist)} m is outside all M777 charge ranges (950–5300 m).`;
+      warnEl.style.display = "block";
+      addMetric("Deflection", "—", "mils");
+      result.defl = null; result.elev = null; result.charge = null; result.tof = null;
+    } else {
+      const minR = charge.table[0][0], maxR = charge.table[charge.table.length-1][0];
+      if (dist < minR || dist > maxR) {
+        warnEl.textContent = `${charge.name} covers ${minR}–${maxR} m. Distance is ${Math.round(dist)} m — consider a different charge.`;
+        warnEl.style.display = "block";
+      }
+
+      const row = interp(charge.table, dist);
+      let elev = row[1];
+      const tof = row[2];
+      const dElevPer100 = row[3];
+
+      let altCorrMils = 0;
+      if (dElevPer100 !== null && Math.abs(altDiff) > 1) {
+        altCorrMils = Math.round((altDiff / 100) * dElevPer100);
+        elev = elev - altCorrMils;
+        altNoteEl.textContent = `Altitude correction: target is ${altDiff > 0 ? "+" : ""}${altDiff} m relative to gun → ${altCorrMils > 0 ? "−" : "+"}${Math.abs(altCorrMils)} mils applied to elevation.`;
+        altNoteEl.style.display = "block";
+      }
+
+      const rangeCorrMils = Math.round(-hw * 1.2 * tof / 10);
+      const driftCorrMils = Math.round(cw * 0.8 * tof / 10);
+      const elevAdj = elev + rangeCorrMils;
+      const deflAdj = (Math.round(bearDeg * MILS_DEG) + driftCorrMils + 6400) % 6400;
+
+      addMetric("Deflection", deflAdj, "mils (NATO 6400)");
+      addMetric("Elevation", elevAdj, "mils");
+      addMetric("Time of flight", tof.toFixed(1) + "s", "from table");
+
+      chargeRowEl.style.display = "flex";
+      const badge = document.getElementById("r-charge-badge");
+      badge.textContent = charge.name;
+      badge.style.color = charge.color;
+      badge.style.background = charge.bg;
+      document.getElementById("r-charge-range").textContent = `(${minR}–${maxR} m)`;
+
+      const windParts = [];
+      if (Math.abs(hw) > 0.05) windParts.push(`headwind ${hw > 0 ? "+" : ""}${hw.toFixed(1)} m/s → elev ${rangeCorrMils > 0 ? "+" : ""}${rangeCorrMils} mils`);
+      if (Math.abs(cw) > 0.05) windParts.push(`crosswind ${cw > 0 ? "+" : ""}${cw.toFixed(1)} m/s → defl ${driftCorrMils > 0 ? "+" : ""}${driftCorrMils} mils`);
+      if (windParts.length > 0) { windNoteEl.textContent = "ACE wind corrections applied — " + windParts.join(", ") + ". Already included in displayed values."; windNoteEl.style.display = "block"; }
+
+      result.defl = deflAdj; result.elev = elevAdj; result.charge = charge.name; result.tof = tof.toFixed(1) + "s";
+    }
+
+  } else {
+    const m = MORTARS[activeWeapon];
+    let charge = chargeSelVal === "auto"
+      ? m.charges.find(c => dist >= c.min && dist <= c.max)
+      : m.charges[parseInt(chargeSelVal)];
+
+    if (!charge) {
+      warnEl.textContent = `Distance ${Math.round(dist)} m is outside all charge ranges for this weapon.`;
+      warnEl.style.display = "block";
+      addMetric("Deflection", "—", "mils");
+      result.defl = null; result.elev = null; result.charge = null; result.tof = null;
+    } else {
+      if (dist < charge.min || dist > charge.max) {
+        warnEl.textContent = `${charge.name} covers ${charge.min}–${charge.max} m. Distance is ${Math.round(dist)} m.`;
+        warnEl.style.display = "block";
+      }
+
+      const tof = dist / charge.mv;
+      const rangeCorrMils = Math.round((-hw * m.windRange * tof / 10) / dist * MILS_DEG * 57.3);
+      const driftCorrMils = Math.round((cw * m.windDrift * tof / 10) / dist * 6400 / (2 * Math.PI));
+      let elev = elevMilsMortar(dist, altDiff, charge.mv);
+
+      if (elev === null || elev < 0 || elev > 1422) {
+        warnEl.textContent = (warnEl.style.display === "block" ? warnEl.textContent + " " : "") + "Elevation out of bounds — try a different charge.";
+        warnEl.style.display = "block";
+        elev = null;
+      }
+
+      const elevAdj = elev !== null ? elev + rangeCorrMils : null;
+      const deflAdj = (Math.round(bearDeg * MILS_DEG) + driftCorrMils + 6400) % 6400;
+
+      addMetric("Deflection", deflAdj, "mils (NATO 6400)");
+      addMetric("Elevation", elevAdj !== null ? elevAdj : "—", "mils");
+      addMetric("Time of flight", Math.round(tof) + "s", "approx.");
+
+      chargeRowEl.style.display = "flex";
+      const badge = document.getElementById("r-charge-badge");
+      badge.textContent = charge.name;
+      badge.style.color = charge.color;
+      badge.style.background = charge.bg;
+      document.getElementById("r-charge-range").textContent = `(${charge.min}–${charge.max} m)`;
+
+      const windParts = [];
+      if (Math.abs(hw) > 0.05) windParts.push(`headwind ${hw > 0 ? "+" : ""}${hw.toFixed(1)} m/s → elev ${rangeCorrMils > 0 ? "+" : ""}${rangeCorrMils} mils`);
+      if (Math.abs(cw) > 0.05) windParts.push(`crosswind ${cw > 0 ? "+" : ""}${cw.toFixed(1)} m/s → defl ${driftCorrMils > 0 ? "+" : ""}${driftCorrMils} mils`);
+      if (windParts.length > 0) { windNoteEl.textContent = "ACE wind applied — " + windParts.join(", ") + ". Already included in displayed values."; windNoteEl.style.display = "block"; }
+
+      result.defl = deflAdj; result.elev = elevAdj; result.charge = charge.name; result.tof = Math.round(tof) + "s";
+    }
+  }
+
+  lastResult = result;
+  resEl.style.display = "block";
+  resEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function logMission() {
+  if (!lastResult) return;
+  const id = "M" + String(missionCounter++).padStart(2, "0");
+  missionLog.unshift({ id, ...lastResult, ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById("log-list");
+  if (!missionLog.length) { el.innerHTML = '<div class="log-empty">No missions logged yet.</div>'; return; }
+  el.innerHTML = missionLog.map((m, i) => {
+    const lbl = m.label ? `<span class="log-custom">${m.label}</span>` : "";
+    const vals = [];
+    vals.push(`<div class="log-val"><span>Dist</span>${m.dist.toLocaleString()} m</div>`);
+    vals.push(`<div class="log-val"><span>Bearing</span>${m.bearDeg.toFixed(1)}°</div>`);
+    if (m.defl != null) vals.push(`<div class="log-val"><span>Defl</span>${m.defl}</div>`);
+    if (m.elev != null) vals.push(`<div class="log-val"><span>Elev</span>${m.elev}</div>`);
+    if (m.charge) vals.push(`<div class="log-val"><span>Charge</span>${m.charge}</div>`);
+    if (m.tof) vals.push(`<div class="log-val"><span>TOF</span>${m.tof}</div>`);
+    if (Math.abs(m.hw||0) > 0.05 || Math.abs(m.cw||0) > 0.05)
+      vals.push(`<div class="log-val"><span>Wind</span>HW${(m.hw||0)>0?"+":""}${(m.hw||0).toFixed(1)} CW${(m.cw||0)>0?"+":""}${(m.cw||0).toFixed(1)}</div>`);
+    return `<div class="log-entry">
+      <div class="log-entry-header">
+        <div class="log-meta">
+          <span class="log-id">${m.id}</span>
+          <span class="log-weapon">${m.weapon}</span>
+          ${lbl}
+        </div>
+        <div style="display:flex;align-items:center;">
+          <span class="log-time">${m.ts}</span>
+          <span class="log-remove" onclick="deleteEntry(${i})">remove</span>
+        </div>
+      </div>
+      <div class="log-vals">${vals.join("")}</div>
+    </div>`;
+  }).join("");
+}
+
+function deleteEntry(i) { missionLog.splice(i, 1); renderLog(); }
+function clearLog() { missionLog = []; missionCounter = 1; renderLog(); }
+
+document.querySelectorAll("input[type=number], input[type=text]").forEach(el => {
+  el.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+});
+</script>
+</body>
+</html>
