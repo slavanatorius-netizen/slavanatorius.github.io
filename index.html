@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ACE Fire Mission Calculator</title>
+<title>ACE Fire Mission Calculator — by Fentastic</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -55,6 +55,7 @@
     padding: 1rem 1.5rem;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     position: sticky;
     top: 0;
@@ -343,9 +344,13 @@
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
     </svg>
   </div>
-  <div>
+  <div style="flex:1;">
     <h1>ACE Fire Mission Calculator</h1>
     <p>ArmA Reforger &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</p>
+  </div>
+  <div style="text-align:right;flex-shrink:0;">
+    <div style="font-size:12px;font-weight:600;color:var(--text2);">Ver 0.1.2</div>
+    <div style="font-size:11px;color:var(--text3);">by Fentastic</div>
   </div>
 </header>
 
@@ -362,14 +367,14 @@
   <div class="card">
     <p class="sec-label" style="margin-bottom:10px;">Gun position</p>
     <div class="row3" style="margin-bottom:12px;">
-      <div class="field"><label>Easting</label><input type="number" id="gx" placeholder="123" min="0" max="999" inputmode="numeric"></div>
-      <div class="field"><label>Northing</label><input type="number" id="gy" placeholder="456" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Easting</label><input type="text" id="gx" placeholder="01510" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
+      <div class="field"><label>Northing</label><input type="text" id="gy" placeholder="00230" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
       <div class="field"><label>Altitude (m)</label><input type="number" id="galt" placeholder="150" inputmode="numeric"></div>
     </div>
     <p class="sec-label" style="margin-bottom:10px;">Target position</p>
     <div class="row3">
-      <div class="field"><label>Easting</label><input type="number" id="tx" placeholder="234" min="0" max="999" inputmode="numeric"></div>
-      <div class="field"><label>Northing</label><input type="number" id="ty" placeholder="567" min="0" max="999" inputmode="numeric"></div>
+      <div class="field"><label>Easting</label><input type="text" id="tx" placeholder="01850" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
+      <div class="field"><label>Northing</label><input type="text" id="ty" placeholder="00580" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
       <div class="field"><label>Altitude (m)</label><input type="number" id="talt" placeholder="120" inputmode="numeric"></div>
     </div>
   </div>
@@ -434,7 +439,7 @@
 
 </div>
 
-<footer>ACE Fire Mission Calculator &mdash; ArmA Reforger &mdash; M107 HE ballistic data from in-game tables</footer>
+<footer>ACE Fire Mission Calculator &mdash; Ver 0.1.2 &mdash; Made by Fentastic &mdash; M107 HE ballistic data from in-game tables</footer>
 
 <script>
 const MILS_DEG = 6400 / 360;
@@ -558,6 +563,7 @@ document.getElementById("wtabs").addEventListener("click", e => {
 buildChargeSelect();
 
 function gv(id) { return parseFloat(document.getElementById(id).value); }
+function parseGrid(id) { const s = document.getElementById(id).value.trim(); return /^\d{5}$/.test(s) ? parseInt(s, 10) : null; }
 
 function elevMilsMortar(dist, altDiff, mv) {
   const g = 9.81, vSq = mv*mv, d = dist, h = altDiff;
@@ -574,18 +580,24 @@ function calculate() {
   resEl.style.display = "none";
   lastResult = null;
 
-  const gx = gv("gx"), gy = gv("gy"), galt = gv("galt");
-  const tx = gv("tx"), ty = gv("ty"), talt = gv("talt");
+  const gx = parseGrid("gx"), gy = parseGrid("gy");
+  const tx = parseGrid("tx"), ty = parseGrid("ty");
+  const galt = gv("galt"), talt = gv("talt");
   const hw = isNaN(gv("hw")) ? 0 : gv("hw");
   const cw = isNaN(gv("cw")) ? 0 : gv("cw");
 
-  if ([gx,gy,galt,tx,ty,talt].some(v => isNaN(v))) {
-    errEl.textContent = "All position and altitude fields are required.";
+  if (gx===null||gy===null||tx===null||ty===null) {
+    errEl.textContent = "Grid coordinates must be exactly 5 digits (e.g. 01510).";
+    errEl.style.display = "block";
+    return;
+  }
+  if (isNaN(galt)||isNaN(talt)) {
+    errEl.textContent = "Altitude fields are required.";
     errEl.style.display = "block";
     return;
   }
 
-  const dx = (tx - gx) * 100, dy = (ty - gy) * 100;
+  const dx = tx - gx, dy = ty - gy;
   const dist = Math.sqrt(dx*dx + dy*dy);
   const altDiff = talt - galt;
   let bearDeg = Math.atan2(dx, dy) * (180 / Math.PI);
