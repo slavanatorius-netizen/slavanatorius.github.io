@@ -2,782 +2,483 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ACE Fire Mission Calculator — by Fentastic</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #f5f5f0;
-    --surface: #ffffff;
-    --surface2: #f0ede8;
-    --border: rgba(0,0,0,0.12);
-    --border2: rgba(0,0,0,0.22);
-    --text: #1a1a18;
-    --text2: #555550;
-    --text3: #888880;
-    --danger: #c0392b;
-    --warning: #a05000;
-    --info-bg: #e6f1fb;
-    --info-text: #0c447c;
-    --radius: 10px;
-    --radius-sm: 7px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1a1a18;
-      --surface: #242422;
-      --surface2: #2e2e2b;
-      --border: rgba(255,255,255,0.1);
-      --border2: rgba(255,255,255,0.2);
-      --text: #f0ede8;
-      --text2: #aaa89f;
-      --text3: #666660;
-      --danger: #e05a4a;
-      --warning: #e08030;
-      --info-bg: #0c2a42;
-      --info-text: #7ab8f5;
-    }
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 0;
-  }
-
-  header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 1rem 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
-  header .icon {
-    width: 36px;
-    height: 36px;
-    background: #2c2c2a;
-    border-radius: var(--radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  header .icon svg { width: 20px; height: 20px; fill: #e8e0c8; }
-
-  header h1 { font-size: 16px; font-weight: 600; color: var(--text); }
-  header p { font-size: 12px; color: var(--text3); margin-top: 1px; }
-
-  .container { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
-
-  .sec-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text3);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 8px;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1rem 1.25rem;
-    margin-bottom: 12px;
-  }
-
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
-
-  @media (max-width: 420px) {
-    .row3 { grid-template-columns: 1fr 1fr; }
-    .row3 .field:last-child { grid-column: 1 / -1; }
-  }
-
-  .field { display: flex; flex-direction: column; gap: 5px; }
-
-  .field label {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text2);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .field input, .field select {
-    font-size: 15px;
-    padding: 8px 10px;
-    border: 1px solid var(--border2);
-    border-radius: var(--radius-sm);
-    background: var(--surface2);
-    color: var(--text);
-    width: 100%;
-    outline: none;
-    transition: border-color 0.15s;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-
-  .field input:focus, .field select:focus {
-    border-color: #4a7fc1;
-    box-shadow: 0 0 0 3px rgba(74,127,193,0.15);
-  }
-
-  .field select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
-  }
-
-  .hint {
-    font-size: 10px;
-    color: var(--text3);
-    line-height: 1.4;
-    margin-top: 2px;
-  }
-
-  .wtabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-
-  .wtab {
-    padding: 7px 14px;
-    font-size: 13px;
-    font-weight: 500;
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    cursor: pointer;
-    background: var(--surface);
-    color: var(--text2);
-    transition: all 0.12s;
-    user-select: none;
-  }
-
-  .wtab:hover { background: var(--surface2); }
-
-  .wtab.active {
-    background: #2c2c2a;
-    color: #e8e0c8;
-    border-color: #2c2c2a;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .wtab.active { background: #e8e0c8; color: #1a1a18; border-color: #e8e0c8; }
-  }
-
-  .btn-calc {
-    width: 100%;
-    padding: 13px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius);
-    border: none;
-    background: #2c3e50;
-    color: #e8e0c8;
-    margin-top: 4px;
-    transition: background 0.15s, transform 0.1s;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-calc:hover { background: #1a252f; }
-  .btn-calc:active { transform: scale(0.98); }
-
-  @media (prefers-color-scheme: dark) {
-    .btn-calc { background: #e8e0c8; color: #1a1a18; }
-    .btn-calc:hover { background: #d4ccb4; }
-  }
-
-  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-
-  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
-
-  .metric {
-    background: var(--surface2);
-    border-radius: var(--radius-sm);
-    padding: 12px 14px;
-  }
-
-  .metric-lbl { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
-  .metric-val { font-size: 24px; font-weight: 700; font-family: 'Courier New', monospace; color: var(--text); line-height: 1.1; }
-  .metric-unit { font-size: 10px; color: var(--text3); margin-top: 3px; }
-
-  .charge-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .charge-label { font-size: 12px; color: var(--text2); }
-
-  .badge {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-  }
-
-  .info-note {
-    font-size: 12px;
-    color: var(--info-text);
-    background: var(--info-bg);
-    border-radius: var(--radius-sm);
-    padding: 8px 12px;
-    margin-top: 8px;
-    line-height: 1.5;
-  }
-
-  .err { font-size: 13px; color: var(--danger); margin-top: 10px; font-weight: 500; }
-  .warn { font-size: 12px; color: var(--warning); margin-top: 6px; font-weight: 500; }
-
-  .log-btn {
-    display: inline-block;
-    padding: 8px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--surface);
-    color: var(--text);
-    transition: background 0.12s;
-    margin-top: 12px;
-  }
-
-  .log-btn:hover { background: var(--surface2); }
-
-  .log-header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .clear-btn {
-    font-size: 12px;
-    padding: 5px 12px;
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border2);
-    background: var(--surface);
-    color: var(--text2);
-    transition: background 0.12s;
-  }
-
-  .clear-btn:hover { color: var(--danger); }
-
-  .log-entry {
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    background: var(--surface);
-  }
-
-  .log-entry-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-  }
-
-  .log-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .log-id { font-size: 12px; font-weight: 700; color: var(--text); font-family: 'Courier New', monospace; }
-  .log-weapon { font-size: 11px; color: var(--text3); }
-  .log-custom { font-size: 12px; color: var(--text2); font-style: italic; }
-  .log-time { font-size: 11px; color: var(--text3); }
-
-  .log-remove {
-    font-size: 11px;
-    color: var(--text3);
-    cursor: pointer;
-    padding: 2px 7px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    margin-left: 8px;
-  }
-
-  .log-remove:hover { color: var(--danger); border-color: var(--danger); }
-
-  .log-vals { display: flex; gap: 12px; flex-wrap: wrap; }
-
-  .log-val {
-    font-family: 'Courier New', monospace;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--text);
-  }
-
-  .log-val span {
-    font-family: -apple-system, sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-    color: var(--text3);
-    margin-right: 3px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .log-empty { font-size: 13px; color: var(--text3); text-align: center; padding: 2rem 0; }
-
-  .section-gap { margin-top: 20px; }
-
-  footer {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text3);
-    padding: 2rem 1rem 1rem;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#1a1c18;--surface:#22251e;--surface2:#2a2e25;--surface3:#32372c;
+  --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
+  --text:#e8e4d8;--text2:#a8a494;--text3:#686558;
+  --accent:#7eb34a;--accent2:#5a8234;
+  --danger:#c0392b;--warning:#c07a20;--radius:8px;--radius-sm:5px;
+}
+body{font-family:'Courier New',monospace;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr-l{display:flex;align-items:center;gap:10px;}
+.logo{width:30px;height:30px;background:var(--accent2);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:16px;height:16px;fill:var(--text);}
+.hdr-title{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
+.hdr-sub{font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:1px;}
+.hdr-ver .ver{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.1em;}
+.hdr-ver .by{font-size:9px;color:var(--text3);text-align:right;margin-top:1px;}
+.main{display:flex;flex:1;overflow:hidden;}
+/* MAP */
+.map-wrap{flex:1;position:relative;overflow:hidden;background:#0d0f0b;cursor:crosshair;}
+canvas{position:absolute;top:0;left:0;}
+#mapimg{display:none;}
+.map-hud{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.72);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;font-size:11px;color:var(--accent);pointer-events:none;letter-spacing:.05em;}
+.pick-banner{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:var(--accent2);border:1px solid var(--accent);border-radius:var(--radius);padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;pointer-events:none;display:none;}
+.pick-banner.on{display:block;animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.5;}}
+.map-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);border:1px solid var(--border);border-radius:var(--radius);padding:5px 12px;font-size:10px;color:var(--text2);pointer-events:none;white-space:nowrap;letter-spacing:.04em;}
+/* SIDEBAR */
+.sidebar{width:310px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.stab{flex:1;padding:8px 4px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;}
+.stab.on{color:var(--accent);border-bottom-color:var(--accent);}
+.scontent{flex:1;overflow-y:auto;padding:10px;}
+.scontent::-webkit-scrollbar{width:3px;}
+.scontent::-webkit-scrollbar-thumb{background:var(--surface3);}
+.tab{display:none;}
+.tab.on{display:block;}
+/* FORM */
+.sec{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin:12px 0 5px;}
+.sec:first-child{margin-top:0;}
+.field{display:flex;flex-direction:column;gap:3px;margin-bottom:7px;}
+.field label{font-size:9px;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;}
+.field input,.field select{font-size:12px;font-family:'Courier New',monospace;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);width:100%;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23686558' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;}
+.hint{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.3;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+/* WEAPON TABS */
+.wtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
+.wtab{padding:4px 9px;font-size:9px;font-weight:700;letter-spacing:.08em;border:1px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:var(--surface2);color:var(--text3);transition:all .12s;text-transform:uppercase;}
+.wtab.on{background:var(--accent2);color:var(--text);border-color:var(--accent2);}
+/* COORD ROW */
+.crow{display:flex;gap:5px;align-items:flex-end;}
+.crow .field{flex:1;}
+.mpick{padding:6px 7px;font-size:10px;font-weight:700;border:1px solid var(--accent2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--accent);cursor:pointer;height:30px;transition:all .12s;font-family:'Courier New',monospace;flex-shrink:0;}
+.mpick:hover,.mpick.on{background:var(--accent2);color:var(--text);}
+.mpick.on{animation:blink 1s infinite;}
+/* BUTTONS */
+.btn-calc{width:100%;padding:9px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:var(--radius-sm);border:none;background:var(--accent2);color:var(--text);font-family:'Courier New',monospace;margin-top:4px;transition:background .15s,transform .1s;}
+.btn-calc:hover{background:var(--accent);}
+.btn-calc:active{transform:scale(.98);}
+.btn-sm{padding:4px 10px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:'Courier New',monospace;transition:all .12s;}
+.btn-sm:hover{color:var(--text);}
+.btn-sm.danger:hover{color:var(--danger);border-color:var(--danger);}
+/* RESULTS */
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
+.rcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px;}
+.rcard.wide{grid-column:1/-1;}
+.rlbl{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:2px;}
+.rval{font-size:20px;font-weight:700;color:var(--accent);line-height:1;}
+.runit{font-size:8px;color:var(--text3);margin-top:2px;}
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.note{font-size:9px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;margin-top:4px;line-height:1.5;}
+.note.warn{color:var(--warning);border-color:rgba(192,122,32,0.3);}
+.note.err{color:var(--danger);}
+/* LOG */
+.lentry{border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;background:var(--surface2);}
+.lhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.lid{font-size:11px;font-weight:700;color:var(--accent);}
+.lwep{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+.llbl{font-size:9px;color:var(--text2);font-style:italic;}
+.ltime{font-size:8px;color:var(--text3);}
+.lvals{display:flex;gap:8px;flex-wrap:wrap;}
+.lv{font-size:10px;font-weight:700;color:var(--text);}
+.lv span{font-size:8px;font-weight:400;color:var(--text3);margin-right:2px;text-transform:uppercase;}
+.lempty{font-size:10px;color:var(--text3);text-align:center;padding:2rem 0;letter-spacing:.1em;}
+.lctrl{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="icon">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-    </svg>
+  <div class="hdr-l">
+    <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
+    <div>
+      <div class="hdr-title">ACE Fire Mission Calculator</div>
+      <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
+    </div>
   </div>
-  <div style="flex:1;">
-    <h1>ACE Fire Mission Calculator</h1>
-    <p>ArmA Reforger &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</p>
-  </div>
-  <div style="text-align:right;flex-shrink:0;">
-    <div style="font-size:12px;font-weight:600;color:var(--text2);">Ver 0.1.2</div>
-    <div style="font-size:11px;color:var(--text3);">by Fentastic</div>
+  <div class="hdr-ver">
+    <div class="ver">Ver 0.1.2</div>
+    <div class="by">by Fentastic</div>
   </div>
 </header>
 
-<div class="container">
-
-  <p class="sec-label" style="margin-bottom:8px;">Weapon system</p>
-  <div class="wtabs" id="wtabs">
-    <div class="wtab active" data-w="m777">M777 (155mm)</div>
-    <div class="wtab" data-w="m252">M252 (81mm)</div>
-    <div class="wtab" data-w="m224">M224 (60mm)</div>
-    <div class="wtab" data-w="2b14">2B14 (82mm)</div>
+<div class="main">
+  <div class="map-wrap" id="mapWrap">
+    <img id="mapimg" src="orlivka_map.jpg" alt="">
+    <canvas id="c"></canvas>
+    <div class="map-hud" id="hud">----- -----</div>
+    <div class="pick-banner" id="pickBanner"></div>
+    <div class="map-hint">Click &#x25CE; Map to pick coordinates &nbsp;|&nbsp; Hover to read grid</div>
   </div>
 
-  <div class="card">
-    <p class="sec-label" style="margin-bottom:10px;">Gun position</p>
-    <div class="row3" style="margin-bottom:12px;">
-      <div class="field"><label>Easting</label><input type="text" id="gx" placeholder="01510" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
-      <div class="field"><label>Northing</label><input type="text" id="gy" placeholder="00230" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
-      <div class="field"><label>Altitude (m)</label><input type="number" id="galt" placeholder="150" inputmode="numeric"></div>
+  <div class="sidebar">
+    <div class="stabs">
+      <div class="stab on" data-t="fire">Fire Mission</div>
+      <div class="stab" data-t="log">Mission Log</div>
     </div>
-    <p class="sec-label" style="margin-bottom:10px;">Target position</p>
-    <div class="row3">
-      <div class="field"><label>Easting</label><input type="text" id="tx" placeholder="01850" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
-      <div class="field"><label>Northing</label><input type="text" id="ty" placeholder="00580" maxlength="5" inputmode="numeric" inputmode="numeric"></div>
-      <div class="field"><label>Altitude (m)</label><input type="number" id="talt" placeholder="120" inputmode="numeric"></div>
-    </div>
-  </div>
+    <div class="scontent">
 
-  <div class="card">
-    <p class="sec-label" style="margin-bottom:10px;">ACE wind &mdash; vector components</p>
-    <div class="row2">
-      <div class="field">
-        <label>Headwind (m/s)</label>
-        <input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal">
-        <div class="hint">+ toward gun &nbsp;|&nbsp; &minus; toward target</div>
+      <div class="tab on" id="t-fire">
+        <div class="sec">Weapon</div>
+        <div class="wtabs" id="wtabs">
+          <div class="wtab on" data-w="m777">M777</div>
+          <div class="wtab" data-w="m252">M252</div>
+          <div class="wtab" data-w="m224">M224</div>
+          <div class="wtab" data-w="2b14">2B14</div>
+        </div>
+
+        <div class="sec">Gun position</div>
+        <div class="crow">
+          <div class="field"><label>Easting</label><input type="text" id="gx" placeholder="02181" maxlength="5" inputmode="numeric"></div>
+          <div class="field"><label>Northing</label><input type="text" id="gy" placeholder="00114" maxlength="5" inputmode="numeric"></div>
+          <button class="mpick" id="pgBtn" onclick="startPick('gun')" title="Pick on map">&#x25CE;</button>
+        </div>
+        <div class="field"><label>Altitude (m)</label><input type="number" id="galt" placeholder="0" inputmode="numeric"></div>
+
+        <div class="sec">Target position</div>
+        <div class="crow">
+          <div class="field"><label>Easting</label><input type="text" id="tx" placeholder="04120" maxlength="5" inputmode="numeric"></div>
+          <div class="field"><label>Northing</label><input type="text" id="ty" placeholder="00656" maxlength="5" inputmode="numeric"></div>
+          <button class="mpick" id="ptBtn" onclick="startPick('tgt')" title="Pick on map">&#x25CE;</button>
+        </div>
+        <div class="field"><label>Altitude (m)</label><input type="number" id="talt" placeholder="0" inputmode="numeric"></div>
+
+        <div class="sec">ACE Wind</div>
+        <div class="row2">
+          <div class="field"><label>Headwind (m/s)</label><input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ to gun | − to tgt</div></div>
+          <div class="field"><label>Crosswind (m/s)</label><input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ from left | − right</div></div>
+        </div>
+
+        <div id="chargeWrap">
+          <div class="sec">Charge</div>
+          <div class="field"><select id="csel"></select></div>
+        </div>
+
+        <div class="field" style="margin-top:6px;"><label>Label (optional)</label><input type="text" id="mlabel" placeholder="e.g. T1 — armour treeline"></div>
+
+        <button class="btn-calc" onclick="calc()">&#x25B6; Calculate</button>
+        <div id="err" class="note err" style="display:none;"></div>
+
+        <div id="resWrap" style="display:none;margin-top:10px;">
+          <div class="sec">Results</div>
+          <div class="rgrid" id="rgrid"></div>
+          <div id="crRow" style="display:none;margin-bottom:6px;">
+            <span style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;">Charge: </span>
+            <span class="badge" id="crBadge"></span>
+            <span style="font-size:9px;color:var(--text3);margin-left:5px;" id="crRange"></span>
+          </div>
+          <div id="altNote" class="note" style="display:none;"></div>
+          <div id="windNote" class="note" style="display:none;"></div>
+          <div id="warnNote" class="note warn" style="display:none;"></div>
+          <div style="text-align:right;margin-top:6px;"><button class="btn-sm" onclick="logMission()">+ Log</button></div>
+        </div>
       </div>
-      <div class="field">
-        <label>Crosswind (m/s)</label>
-        <input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal">
-        <div class="hint">+ from left &nbsp;|&nbsp; &minus; from right</div>
+
+      <div class="tab" id="t-log">
+        <div class="lctrl">
+          <div class="sec" style="margin:0;">Missions</div>
+          <button class="btn-sm danger" onclick="clearLog()">Clear all</button>
+        </div>
+        <div id="logList"><div class="lempty">NO MISSIONS LOGGED</div></div>
       </div>
+
     </div>
   </div>
-
-  <div class="card" id="charge-card">
-    <p class="sec-label" style="margin-bottom:10px;">Charge / propellant</p>
-    <div class="field">
-      <label>Select charge</label>
-      <select id="charge-sel"></select>
-    </div>
-  </div>
-
-  <div class="card">
-    <p class="sec-label" style="margin-bottom:10px;">Mission label (optional)</p>
-    <div class="field">
-      <input type="text" id="mission-label" placeholder="e.g. T1 — enemy armour treeline">
-    </div>
-  </div>
-
-  <button class="btn-calc" onclick="calculate()">Calculate Fire Mission</button>
-  <div id="err" class="err" style="display:none;"></div>
-
-  <div id="res-wrap" style="display:none;">
-    <div class="divider"></div>
-    <p class="sec-label" style="margin-bottom:12px;">Fire mission data</p>
-    <div class="metrics" id="metrics-grid"></div>
-    <div class="charge-row" id="charge-row" style="display:none;">
-      <span class="charge-label">Charge:</span>
-      <span class="badge" id="r-charge-badge">—</span>
-      <span style="font-size:12px;color:var(--text3);" id="r-charge-range"></span>
-    </div>
-    <div id="r-alt-note" class="info-note" style="display:none;"></div>
-    <div id="r-wind-note" class="info-note" style="display:none; margin-top:6px;"></div>
-    <div id="r-warn" class="warn" style="display:none;"></div>
-    <div style="text-align:right;">
-      <button class="log-btn" onclick="logMission()">+ Log this mission</button>
-    </div>
-  </div>
-
-  <div class="divider section-gap"></div>
-  <div class="log-header-row">
-    <p class="sec-label" style="margin:0;">Mission log</p>
-    <button class="clear-btn" onclick="clearLog()">Clear all</button>
-  </div>
-  <div id="log-list"><div class="log-empty">No missions logged yet.</div></div>
-
 </div>
 
-<footer>ACE Fire Mission Calculator &mdash; Ver 0.1.2 &mdash; Made by Fentastic &mdash; M107 HE ballistic data from in-game tables</footer>
-
 <script>
-const MILS_DEG = 6400 / 360;
+// Calibration constants (derived from in-game measurements)
+const OX=-329.2035, OY=1653.2283, SX=0.264602, SY=-0.264082;
+const IMG_W=1442, IMG_H=1440;
+const MILS_DEG=6400/360;
 
-const M777_CHARGES = [
-  { name:"Charge 1", color:"#3B6D11", bg:"#d4edbc",
-    table:[[950,1245,24.4,24,0.2],[1000,1221,24.2,24,0.2],[1050,1197,24.0,26,0.3],[1100,1171,23.7,27,0.3],[1150,1144,23.4,29,0.3],[1200,1115,23.1,31,0.4],[1250,1084,22.7,34,0.4],[1300,1050,22.3,39,0.5],[1350,1011,21.8,46,0.6],[1400,965,21.2,58,0.9],[1450,907,20.3,107,1.7],[1500,800,18.6,null,null]]
-  },
-  { name:"Charge 2", color:"#185FA5", bg:"#bcd8f5",
-    table:[[1500,1270,33.1,13,0.1],[1550,1257,33.0,14,0.1],[1600,1243,32.9,14,0.2],[1650,1229,32.7,15,0.2],[1700,1214,32.5,14,0.1],[1750,1200,32.4,15,0.3],[1800,1185,32.1,16,0.2],[1850,1169,31.9,16,0.2],[1900,1153,31.7,17,0.2],[1950,1136,31.5,17,0.3],[2000,1119,31.2,18,0.2],[2050,1101,31.0,19,0.3],[2100,1082,30.7,20,0.4],[2150,1062,30.3,21,0.3],[2200,1041,30.0,23,0.4],[2250,1018,29.6,23,0.4],[2300,995,29.2,28,0.5],[2350,967,28.7,29,0.6],[2400,938,28.1,34,0.6],[2450,904,27.5,44,1.0],[2500,860,26.5,null,null]]
-  },
-  { name:"Charge 3", color:"#993C1D", bg:"#f5c4b3",
-    table:[[2100,1272,41.0,10,0.1],[2200,1253,40.8,10,0.2],[2300,1233,40.5,10,0.2],[2400,1213,40.2,11,0.2],[2500,1192,39.9,11,0.2],[2600,1170,39.5,12,0.2],[2700,1147,39.1,12,0.2],[2800,1123,38.7,13,0.2],[2900,1098,38.3,14,0.3],[3000,1070,37.7,14,0.2],[3100,1042,37.2,16,0.4],[3200,1010,36.5,16,0.3],[3300,975,35.7,18,0.4],[3400,936,34.9,22,0.6],[3500,890,33.7,28,0.7],[3600,828,32.1,null,null]]
-  },
-  { name:"Charge 4", color:"#534AB7", bg:"#cec9f5",
-    table:[[2600,1271,47.2,8,0.1],[2700,1255,47.0,7,0.2],[2800,1240,46.7,8,0.1],[2900,1224,46.5,9,0.2],[3000,1207,46.2,9,0.2],[3100,1190,45.9,9,0.2],[3200,1172,45.6,9,0.2],[3300,1154,45.2,9,0.2],[3400,1135,44.9,9,0.2],[3500,1116,44.5,10,0.2],[3600,1095,44.0,10,0.2],[3700,1074,43.6,11,0.3],[3800,1052,43.1,12,0.3],[3900,1028,42.5,12,0.3],[4000,1003,41.9,14,0.3],[4100,976,41.3,15,0.4],[4200,946,40.5,17,0.5],[4300,912,39.6,17,0.5],[4400,874,38.5,20,0.5],[4500,828,37.2,26,0.8]]
-  },
-  { name:"Charge 5", color:"#854F0B", bg:"#fad4a0",
-    table:[[3000,1271,52.2,7,0.1],[3100,1258,52.0,7,0.1],[3200,1244,51.8,7,0.1],[3300,1230,51.5,7,0.1],[3400,1216,51.3,7,0.1],[3500,1202,51.0,7,0.2],[3600,1187,50.7,7,0.1],[3700,1172,50.4,7,0.1],[3800,1156,50.1,8,0.1],[3900,1140,49.8,7,0.2],[4000,1124,49.4,8,0.2],[4100,1107,49.0,9,0.2],[4200,1089,48.6,9,0.2],[4300,1071,48.2,9,0.2],[4400,1052,47.7,9,0.2],[4500,1032,47.2,10,0.2],[4600,1011,46.7,10,0.2],[4700,989,46.1,10,0.2],[4800,966,45.5,11,0.3],[4900,941,44.7,12,0.3],[5000,913,44.0,13,0.4],[5100,883,43.1,14,0.3],[5200,850,42.0,16,0.5],[5300,809,40.7,20,0.6]]
-  }
+function g2p(gx,gy){return{x:OX+gx*SX,y:OY+gy*SY};}
+function p2g(px,py){return{x:Math.round((px-OX)/SX),y:Math.round((py-OY)/SY)};}
+
+// M777 ballistic tables [range, elev_mils, tof_s, dElev_per_100m]
+const M777C=[
+  {name:"Charge 1",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[[950,1245,24.4,24],[1000,1221,24.2,24],[1050,1197,24.0,26],[1100,1171,23.7,27],[1150,1144,23.4,29],[1200,1115,23.1,31],[1250,1084,22.7,34],[1300,1050,22.3,39],[1350,1011,21.8,46],[1400,965,21.2,58],[1450,907,20.3,107],[1500,800,18.6,null]]},
+  {name:"Charge 2",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[[1500,1270,33.1,13],[1550,1257,33.0,14],[1600,1243,32.9,14],[1650,1229,32.7,15],[1700,1214,32.5,14],[1750,1200,32.4,15],[1800,1185,32.1,16],[1850,1169,31.9,16],[1900,1153,31.7,17],[1950,1136,31.5,17],[2000,1119,31.2,18],[2050,1101,31.0,19],[2100,1082,30.7,20],[2150,1062,30.3,21],[2200,1041,30.0,23],[2250,1018,29.6,23],[2300,995,29.2,28],[2350,967,28.7,29],[2400,938,28.1,34],[2450,904,27.5,44],[2500,860,26.5,null]]},
+  {name:"Charge 3",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[[2100,1272,41.0,10],[2200,1253,40.8,10],[2300,1233,40.5,10],[2400,1213,40.2,11],[2500,1192,39.9,11],[2600,1170,39.5,12],[2700,1147,39.1,12],[2800,1123,38.7,13],[2900,1098,38.3,14],[3000,1070,37.7,14],[3100,1042,37.2,16],[3200,1010,36.5,16],[3300,975,35.7,18],[3400,936,34.9,22],[3500,890,33.7,28],[3600,828,32.1,null]]},
+  {name:"Charge 4",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[[2600,1271,47.2,8],[2700,1255,47.0,7],[2800,1240,46.7,8],[2900,1224,46.5,9],[3000,1207,46.2,9],[3100,1190,45.9,9],[3200,1172,45.6,9],[3300,1154,45.2,9],[3400,1135,44.9,9],[3500,1116,44.5,10],[3600,1095,44.0,10],[3700,1074,43.6,11],[3800,1052,43.1,12],[3900,1028,42.5,12],[4000,1003,41.9,14],[4100,976,41.3,15],[4200,946,40.5,17],[4300,912,39.6,17],[4400,874,38.5,20],[4500,828,37.2,26]]},
+  {name:"Charge 5",col:"#854F0B",bg:"rgba(133,79,11,0.3)",t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
 ];
 
-const MORTARS = {
-  m252: { label:"M252 (81mm)", windDrift:1.4, windRange:1.8, charges:[
-    {name:"Charge 0",min:73,  max:490, mv:69,  color:"#3B6D11",bg:"#d4edbc"},
-    {name:"Charge 1",min:200, max:900, mv:109, color:"#185FA5",bg:"#bcd8f5"},
-    {name:"Charge 2",min:400, max:1500,mv:147, color:"#993C1D",bg:"#f5c4b3"},
-    {name:"Charge 3",min:700, max:2100,mv:185, color:"#534AB7",bg:"#cec9f5"},
-    {name:"Charge 4",min:1000,max:3000,mv:225, color:"#854F0B",bg:"#fad4a0"},
-    {name:"Charge 5",min:1500,max:4000,mv:273, color:"#A32D2D",bg:"#f5b8b8"},
-    {name:"Charge 6",min:2000,max:5608,mv:320, color:"#444441",bg:"#d8d6ce"},
-  ]},
-  m224: { label:"M224 (60mm)", windDrift:1.8, windRange:2.2, charges:[
-    {name:"Charge 0",min:40, max:330, mv:55, color:"#3B6D11",bg:"#d4edbc"},
-    {name:"Charge 1",min:100,max:600, mv:89, color:"#185FA5",bg:"#bcd8f5"},
-    {name:"Charge 2",min:200,max:900, mv:120,color:"#993C1D",bg:"#f5c4b3"},
-    {name:"Charge 3",min:400,max:1200,mv:150,color:"#534AB7",bg:"#cec9f5"},
-    {name:"Charge 4",min:700,max:1800,mv:185,color:"#854F0B",bg:"#fad4a0"},
-    {name:"Charge 5",min:1000,max:2490,mv:218,color:"#444441",bg:"#d8d6ce"},
-  ]},
-  "2b14": { label:"2B14 Podnos (82mm)", windDrift:1.5, windRange:1.9, charges:[
-    {name:"Charge 0",min:80, max:520, mv:72, color:"#3B6D11",bg:"#d4edbc"},
-    {name:"Charge 1",min:250,max:950, mv:115,color:"#185FA5",bg:"#bcd8f5"},
-    {name:"Charge 2",min:450,max:1600,mv:155,color:"#993C1D",bg:"#f5c4b3"},
-    {name:"Charge 3",min:750,max:2200,mv:196,color:"#534AB7",bg:"#cec9f5"},
-    {name:"Charge 4",min:1100,max:3000,mv:238,color:"#854F0B",bg:"#fad4a0"},
-    {name:"Charge 5",min:1600,max:4270,mv:282,color:"#444441",bg:"#d8d6ce"},
-  ]}
+const MORT={
+  m252:{label:"M252 (81mm)",wd:1.4,wr:1.8,c:[{n:"Charge 0",mn:73,mx:490,mv:69,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:200,mx:900,mv:109,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:400,mx:1500,mv:147,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:700,mx:2100,mv:185,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1000,mx:3000,mv:225,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1500,mx:4000,mv:273,col:"#A32D2D",bg:"rgba(163,45,45,0.3)"},{n:"Charge 6",mn:2000,mx:5608,mv:320,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
+  m224:{label:"M224 (60mm)",wd:1.8,wr:2.2,c:[{n:"Charge 0",mn:40,mx:330,mv:55,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:100,mx:600,mv:89,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:200,mx:900,mv:120,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:400,mx:1200,mv:150,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:700,mx:1800,mv:185,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1000,mx:2490,mv:218,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
+  "2b14":{label:"2B14 (82mm)",wd:1.5,wr:1.9,c:[{n:"Charge 0",mn:80,mx:520,mv:72,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:250,mx:950,mv:115,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:450,mx:1600,mv:155,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:750,mx:2200,mv:196,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1100,mx:3000,mv:238,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1600,mx:4270,mv:282,col:"#555550",bg:"rgba(85,85,80,0.3)"}]}
 };
 
-let activeWeapon = "m777";
-let lastResult = null;
-let missionLog = [];
-let missionCounter = 1;
+let aw="m777",lastRes=null,mlog=[],mcnt=1,pickMode=null,gMark=null,tMark=null;
+let cv,ctx2,mImg,cW,cH,mSc,mOX,mOY;
 
-function interp(table, dist) {
-  if (dist <= table[0][0]) return [...table[0]];
-  if (dist >= table[table.length-1][0]) return [...table[table.length-1]];
-  for (let i = 0; i < table.length - 1; i++) {
-    const a = table[i], b = table[i+1];
-    if (dist >= a[0] && dist <= b[0]) {
-      const t = (dist - a[0]) / (b[0] - a[0]);
-      return [
-        dist,
-        Math.round(a[1] + (b[1]-a[1])*t),
-        parseFloat((a[2] + (b[2]-a[2])*t).toFixed(1)),
-        (a[3]!=null && b[3]!=null) ? parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)) : null,
-        (a[4]!=null && b[4]!=null) ? parseFloat((a[4]+(b[4]-a[4])*t).toFixed(1)) : null
-      ];
-    }
-  }
-  return [...table[table.length-1]];
+// MAP
+function initMap(){
+  cv=document.getElementById('c');
+  ctx2=cv.getContext('2d');
+  mImg=document.getElementById('mapimg');
+  mImg.onload=()=>{resize();draw();};
+  mImg.src='orlivka_map.jpg';
+  window.addEventListener('resize',()=>{resize();draw();});
+  cv.addEventListener('mousemove',onMove);
+  cv.addEventListener('click',onClick);
+  cv.addEventListener('mouseleave',()=>{document.getElementById('hud').textContent='----- -----';});
 }
 
-function findBestM777Charge(dist) {
-  for (const c of M777_CHARGES) {
-    const min = c.table[0][0], max = c.table[c.table.length-1][0];
-    if (dist >= min && dist <= max) return c;
+function resize(){
+  const p=document.getElementById('mapWrap');
+  cW=p.clientWidth;cH=p.clientHeight;
+  cv.width=cW;cv.height=cH;
+  const ia=IMG_W/IMG_H,pa=cW/cH;
+  if(ia>pa){mSc=cW/IMG_W;mOX=0;mOY=(cH-IMG_H*mSc)/2;}
+  else{mSc=cH/IMG_H;mOX=(cW-IMG_W*mSc)/2;mOY=0;}
+}
+
+function c2i(cx,cy){return{x:(cx-mOX)/mSc,y:(cy-mOY)/mSc};}
+function g2c(gx,gy){const p=g2p(gx,gy);return{x:p.x*mSc+mOX,y:p.y*mSc+mOY};}
+
+function draw(){
+  if(!ctx2||!mImg.complete)return;
+  ctx2.clearRect(0,0,cW,cH);
+  ctx2.drawImage(mImg,mOX,mOY,IMG_W*mSc,IMG_H*mSc);
+  if(gMark&&tMark){
+    const g=g2c(gMark.x,gMark.y),t=g2c(tMark.x,tMark.y);
+    ctx2.save();
+    ctx2.beginPath();ctx2.moveTo(g.x,g.y);ctx2.lineTo(t.x,t.y);
+    ctx2.strokeStyle='rgba(255,210,0,0.55)';ctx2.lineWidth=1.5;ctx2.setLineDash([5,4]);ctx2.stroke();
+    ctx2.restore();
   }
+  if(gMark)drawMkr(g2c(gMark.x,gMark.y),'#7eb34a','G',gMark.x,gMark.y);
+  if(tMark)drawMkr(g2c(tMark.x,tMark.y),'#e05040','T',tMark.x,tMark.y);
+}
+
+function drawMkr(c,col,lbl,gx,gy){
+  const r=9;
+  ctx2.save();
+  // Shadow ring
+  ctx2.beginPath();ctx2.arc(c.x,c.y,r+3,0,Math.PI*2);
+  ctx2.strokeStyle='rgba(0,0,0,0.6)';ctx2.lineWidth=3;ctx2.stroke();
+  // Crosshair
+  ctx2.strokeStyle=col;ctx2.lineWidth=1.5;ctx2.beginPath();
+  ctx2.moveTo(c.x-r-5,c.y);ctx2.lineTo(c.x-r+2,c.y);
+  ctx2.moveTo(c.x+r-2,c.y);ctx2.lineTo(c.x+r+5,c.y);
+  ctx2.moveTo(c.x,c.y-r-5);ctx2.lineTo(c.x,c.y-r+2);
+  ctx2.moveTo(c.x,c.y+r-2);ctx2.lineTo(c.x,c.y+r+5);
+  ctx2.stroke();
+  // Circle fill
+  ctx2.beginPath();ctx2.arc(c.x,c.y,r,0,Math.PI*2);
+  ctx2.fillStyle=col+'30';ctx2.fill();
+  ctx2.strokeStyle=col;ctx2.lineWidth=2;ctx2.stroke();
+  // Label
+  ctx2.font='bold 8px Courier New';ctx2.fillStyle=col;ctx2.textAlign='center';ctx2.textBaseline='middle';
+  ctx2.fillText(lbl,c.x,c.y);
+  // Coord tag
+  const gxs=String(Math.max(0,gx)).padStart(5,'0'),gys=String(Math.max(0,gy)).padStart(5,'0');
+  const txt=`${gxs} ${gys}`;
+  ctx2.font='8px Courier New';
+  const tw=ctx2.measureText(txt).width+8;
+  ctx2.fillStyle='rgba(0,0,0,0.75)';ctx2.fillRect(c.x-tw/2,c.y+r+3,tw,11);
+  ctx2.fillStyle=col;ctx2.fillText(txt,c.x,c.y+r+9);
+  ctx2.restore();
+}
+
+function onMove(e){
+  const r=cv.getBoundingClientRect();
+  const ip=c2i(e.clientX-r.left,e.clientY-r.top);
+  const gp=p2g(ip.x,ip.y);
+  document.getElementById('hud').textContent=`${String(Math.max(0,gp.x)).padStart(5,'0')}  ${String(Math.max(0,gp.y)).padStart(5,'0')}`;
+}
+
+function onClick(e){
+  if(!pickMode)return;
+  const r=cv.getBoundingClientRect();
+  const ip=c2i(e.clientX-r.left,e.clientY-r.top);
+  const gp=p2g(ip.x,ip.y);
+  const xs=String(Math.max(0,gp.x)).padStart(5,'0'),ys=String(Math.max(0,gp.y)).padStart(5,'0');
+  if(pickMode==='gun'){
+    gMark={x:gp.x,y:gp.y};
+    document.getElementById('gx').value=xs;document.getElementById('gy').value=ys;
+    document.getElementById('pgBtn').classList.remove('on');
+  } else {
+    tMark={x:gp.x,y:gp.y};
+    document.getElementById('tx').value=xs;document.getElementById('ty').value=ys;
+    document.getElementById('ptBtn').classList.remove('on');
+  }
+  pickMode=null;
+  document.getElementById('pickBanner').classList.remove('on');
+  draw();
+}
+
+function startPick(t){
+  pickMode=t;
+  const b=document.getElementById('pickBanner');
+  b.textContent=t==='gun'?'▶ CLICK — GUN POSITION':'▶ CLICK — TARGET POSITION';
+  b.classList.add('on');
+  document.getElementById('pgBtn').classList.toggle('on',t==='gun');
+  document.getElementById('ptBtn').classList.toggle('on',t==='tgt');
+}
+
+// BALLISTICS
+function interp(tbl,dist){
+  if(dist<=tbl[0][0])return[...tbl[0]];
+  if(dist>=tbl[tbl.length-1][0])return[...tbl[tbl.length-1]];
+  for(let i=0;i<tbl.length-1;i++){
+    const a=tbl[i],b=tbl[i+1];
+    if(dist>=a[0]&&dist<=b[0]){
+      const t=(dist-a[0])/(b[0]-a[0]);
+      return[dist,Math.round(a[1]+(b[1]-a[1])*t),
+        parseFloat((a[2]+(b[2]-a[2])*t).toFixed(1)),
+        (a[3]!=null&&b[3]!=null)?parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)):null];
+    }
+  }
+  return[...tbl[tbl.length-1]];
+}
+
+function bestM777(dist){
+  for(const c of M777C){const mn=c.t[0][0],mx=c.t[c.t.length-1][0];if(dist>=mn&&dist<=mx)return c;}
   return null;
 }
 
-function buildChargeSelect() {
-  const sel = document.getElementById("charge-sel");
-  sel.innerHTML = "";
-  const auto = document.createElement("option");
-  auto.value = "auto";
-  auto.textContent = "Auto (lowest valid charge)";
-  sel.appendChild(auto);
-
-  if (activeWeapon === "m777") {
-    M777_CHARGES.forEach((c, i) => {
-      const opt = document.createElement("option");
-      opt.value = i;
-      const min = c.table[0][0], max = c.table[c.table.length-1][0];
-      opt.textContent = `${c.name}  (${min}–${max} m)`;
-      sel.appendChild(opt);
-    });
-  } else {
-    MORTARS[activeWeapon].charges.forEach((c, i) => {
-      const opt = document.createElement("option");
-      opt.value = i;
-      opt.textContent = `${c.name}  (${c.min}–${c.max} m)`;
-      sel.appendChild(opt);
-    });
-  }
+function mortarElev(dist,altDiff,mv){
+  const g=9.81,vSq=mv*mv,d=dist,h=altDiff;
+  const disc=vSq*vSq-g*(g*d*d+2*h*vSq);
+  if(disc<0)return null;
+  return Math.round(Math.atan((vSq-Math.sqrt(disc))/(g*d))*(180/Math.PI)*MILS_DEG);
 }
 
-document.getElementById("wtabs").addEventListener("click", e => {
-  const tab = e.target.closest(".wtab");
-  if (!tab) return;
-  document.querySelectorAll(".wtab").forEach(t => t.classList.remove("active"));
-  tab.classList.add("active");
-  activeWeapon = tab.dataset.w;
-  buildChargeSelect();
-  document.getElementById("res-wrap").style.display = "none";
-  document.getElementById("err").style.display = "none";
-  lastResult = null;
-});
+function pg(id){const s=document.getElementById(id).value.trim();return/^\d{5}$/.test(s)?parseInt(s,10):null;}
+function gv(id){return parseFloat(document.getElementById(id).value);}
 
-buildChargeSelect();
+function calc(){
+  const err=document.getElementById('err'),res=document.getElementById('resWrap');
+  err.style.display='none';res.style.display='none';lastRes=null;
+  const gx=pg('gx'),gy=pg('gy'),tx=pg('tx'),ty=pg('ty');
+  const galt=gv('galt'),talt=gv('talt');
+  const hw=isNaN(gv('hw'))?0:gv('hw'),cw=isNaN(gv('cw'))?0:gv('cw');
+  if(gx===null||gy===null||tx===null||ty===null){err.textContent='Grid coords must be 5 digits.';err.style.display='block';return;}
+  if(isNaN(galt)||isNaN(talt)){err.textContent='Altitude fields are required.';err.style.display='block';return;}
+  gMark={x:gx,y:gy};tMark={x:tx,y:ty};draw();
+  const dx=tx-gx,dy=ty-gy,dist=Math.sqrt(dx*dx+dy*dy),altDiff=talt-galt;
+  let bear=Math.atan2(dx,dy)*(180/Math.PI);if(bear<0)bear+=360;
+  ['warnNote','windNote','altNote'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('crRow').style.display='none';
+  const rg=document.getElementById('rgrid');rg.innerHTML='';
+  function addR(l,v,u,wide=false){rg.innerHTML+=`<div class="rcard${wide?' wide':''}"><div class="rlbl">${l}</div><div class="rval">${v}</div><div class="runit">${u}</div></div>`;}
+  addR('Distance',Math.round(dist).toLocaleString(),'meters');
+  addR('Bearing',bear.toFixed(1)+'°','degrees true');
+  const csv=document.getElementById('csel').value;
+  const wlbl=aw==='m777'?'M777 (155mm)':MORT[aw].label;
+  let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById('mlabel').value.trim(),hw,cw};
 
-function gv(id) { return parseFloat(document.getElementById(id).value); }
-function parseGrid(id) { const s = document.getElementById(id).value.trim(); return /^\d{5}$/.test(s) ? parseInt(s, 10) : null; }
-
-function elevMilsMortar(dist, altDiff, mv) {
-  const g = 9.81, vSq = mv*mv, d = dist, h = altDiff;
-  const disc = vSq*vSq - g*(g*d*d + 2*h*vSq);
-  if (disc < 0) return null;
-  const rad = Math.atan((vSq - Math.sqrt(disc)) / (g*d));
-  return Math.round(rad * (180/Math.PI) * MILS_DEG);
-}
-
-function calculate() {
-  const errEl = document.getElementById("err");
-  const resEl = document.getElementById("res-wrap");
-  errEl.style.display = "none";
-  resEl.style.display = "none";
-  lastResult = null;
-
-  const gx = parseGrid("gx"), gy = parseGrid("gy");
-  const tx = parseGrid("tx"), ty = parseGrid("ty");
-  const galt = gv("galt"), talt = gv("talt");
-  const hw = isNaN(gv("hw")) ? 0 : gv("hw");
-  const cw = isNaN(gv("cw")) ? 0 : gv("cw");
-
-  if (gx===null||gy===null||tx===null||ty===null) {
-    errEl.textContent = "Grid coordinates must be exactly 5 digits (e.g. 01510).";
-    errEl.style.display = "block";
-    return;
-  }
-  if (isNaN(galt)||isNaN(talt)) {
-    errEl.textContent = "Altitude fields are required.";
-    errEl.style.display = "block";
-    return;
-  }
-
-  const dx = tx - gx, dy = ty - gy;
-  const dist = Math.sqrt(dx*dx + dy*dy);
-  const altDiff = talt - galt;
-  let bearDeg = Math.atan2(dx, dy) * (180 / Math.PI);
-  if (bearDeg < 0) bearDeg += 360;
-
-  const warnEl = document.getElementById("r-warn");
-  const windNoteEl = document.getElementById("r-wind-note");
-  const altNoteEl = document.getElementById("r-alt-note");
-  const chargeRowEl = document.getElementById("charge-row");
-  warnEl.style.display = "none";
-  windNoteEl.style.display = "none";
-  altNoteEl.style.display = "none";
-  chargeRowEl.style.display = "none";
-
-  const metricsEl = document.getElementById("metrics-grid");
-  metricsEl.innerHTML = "";
-
-  function addMetric(lbl, val, unit) {
-    metricsEl.innerHTML += `<div class="metric"><div class="metric-lbl">${lbl}</div><div class="metric-val">${val}</div><div class="metric-unit">${unit}</div></div>`;
-  }
-
-  const chargeSelVal = document.getElementById("charge-sel").value;
-  const weaponLabel = activeWeapon === "m777" ? "M777 (155mm)" : MORTARS[activeWeapon].label;
-  let result = { weapon: weaponLabel, dist: Math.round(dist), bearDeg, label: document.getElementById("mission-label").value.trim(), hw, cw };
-
-  addMetric("Distance", Math.round(dist).toLocaleString(), "meters");
-  addMetric("Bearing", bearDeg.toFixed(1) + "°", "degrees true");
-
-  if (activeWeapon === "m777") {
-    let charge = chargeSelVal === "auto" ? findBestM777Charge(dist) : M777_CHARGES[parseInt(chargeSelVal)];
-
-    if (!charge) {
-      warnEl.textContent = `Distance ${Math.round(dist)} m is outside all M777 charge ranges (950–5300 m).`;
-      warnEl.style.display = "block";
-      addMetric("Deflection", "—", "mils");
-      result.defl = null; result.elev = null; result.charge = null; result.tof = null;
-    } else {
-      const minR = charge.table[0][0], maxR = charge.table[charge.table.length-1][0];
-      if (dist < minR || dist > maxR) {
-        warnEl.textContent = `${charge.name} covers ${minR}–${maxR} m. Distance is ${Math.round(dist)} m — consider a different charge.`;
-        warnEl.style.display = "block";
-      }
-
-      const row = interp(charge.table, dist);
-      let elev = row[1];
-      const tof = row[2];
-      const dElevPer100 = row[3];
-
-      let altCorrMils = 0;
-      if (dElevPer100 !== null && Math.abs(altDiff) > 1) {
-        altCorrMils = Math.round((altDiff / 100) * dElevPer100);
-        elev = elev - altCorrMils;
-        altNoteEl.textContent = `Altitude correction: target is ${altDiff > 0 ? "+" : ""}${altDiff} m relative to gun → ${altCorrMils > 0 ? "−" : "+"}${Math.abs(altCorrMils)} mils applied to elevation.`;
-        altNoteEl.style.display = "block";
-      }
-
-      const rangeCorrMils = Math.round(-hw * 1.2 * tof / 10);
-      const driftCorrMils = Math.round(cw * 0.8 * tof / 10);
-      const elevAdj = elev + rangeCorrMils;
-      const deflAdj = (Math.round(bearDeg * MILS_DEG) + driftCorrMils + 6400) % 6400;
-
-      addMetric("Deflection", deflAdj, "mils (NATO 6400)");
-      addMetric("Elevation", elevAdj, "mils");
-      addMetric("Time of flight", tof.toFixed(1) + "s", "from table");
-
-      chargeRowEl.style.display = "flex";
-      const badge = document.getElementById("r-charge-badge");
-      badge.textContent = charge.name;
-      badge.style.color = charge.color;
-      badge.style.background = charge.bg;
-      document.getElementById("r-charge-range").textContent = `(${minR}–${maxR} m)`;
-
-      const windParts = [];
-      if (Math.abs(hw) > 0.05) windParts.push(`headwind ${hw > 0 ? "+" : ""}${hw.toFixed(1)} m/s → elev ${rangeCorrMils > 0 ? "+" : ""}${rangeCorrMils} mils`);
-      if (Math.abs(cw) > 0.05) windParts.push(`crosswind ${cw > 0 ? "+" : ""}${cw.toFixed(1)} m/s → defl ${driftCorrMils > 0 ? "+" : ""}${driftCorrMils} mils`);
-      if (windParts.length > 0) { windNoteEl.textContent = "ACE wind corrections applied — " + windParts.join(", ") + ". Already included in displayed values."; windNoteEl.style.display = "block"; }
-
-      result.defl = deflAdj; result.elev = elevAdj; result.charge = charge.name; result.tof = tof.toFixed(1) + "s";
+  if(aw==='m777'){
+    let ch=csv==='auto'?bestM777(dist):M777C[parseInt(csv)];
+    if(!ch){document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all M777 ranges (950–5300m).`;document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+    else{
+      const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
+      if(dist<mn||dist>mx){document.getElementById('warnNote').textContent=`${ch.name} range ${mn}–${mx}m. Distance ${Math.round(dist)}m.`;document.getElementById('warnNote').style.display='block';}
+      const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
+      let ac=0;if(dE!==null&&Math.abs(altDiff)>1){ac=Math.round((altDiff/100)*dE);elev-=ac;document.getElementById('altNote').textContent=`Alt: ${altDiff>0?'+':''}${altDiff}m → ${ac>0?'−':'+'}${Math.abs(ac)} mils`;document.getElementById('altNote').style.display='block';}
+      const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
+      const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea,'mils');addR('TOF',tof.toFixed(1)+'s','from table');
+      document.getElementById('crRow').style.display='block';
+      const bd=document.getElementById('crBadge');bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
+      document.getElementById('crRange').textContent=`(${mn}–${mx}m)`;
+      const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→elev${rc>0?'+':''}${rc}`);if(Math.abs(cw)>0.05)wp.push(`CW→defl${dc>0?'+':''}${dc}`);
+      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' mils (included)';document.getElementById('windNote').style.display='block';}
+      result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+'s';
     }
-
   } else {
-    const m = MORTARS[activeWeapon];
-    let charge = chargeSelVal === "auto"
-      ? m.charges.find(c => dist >= c.min && dist <= c.max)
-      : m.charges[parseInt(chargeSelVal)];
-
-    if (!charge) {
-      warnEl.textContent = `Distance ${Math.round(dist)} m is outside all charge ranges for this weapon.`;
-      warnEl.style.display = "block";
-      addMetric("Deflection", "—", "mils");
-      result.defl = null; result.elev = null; result.charge = null; result.tof = null;
-    } else {
-      if (dist < charge.min || dist > charge.max) {
-        warnEl.textContent = `${charge.name} covers ${charge.min}–${charge.max} m. Distance is ${Math.round(dist)} m.`;
-        warnEl.style.display = "block";
-      }
-
-      const tof = dist / charge.mv;
-      const rangeCorrMils = Math.round((-hw * m.windRange * tof / 10) / dist * MILS_DEG * 57.3);
-      const driftCorrMils = Math.round((cw * m.windDrift * tof / 10) / dist * 6400 / (2 * Math.PI));
-      let elev = elevMilsMortar(dist, altDiff, charge.mv);
-
-      if (elev === null || elev < 0 || elev > 1422) {
-        warnEl.textContent = (warnEl.style.display === "block" ? warnEl.textContent + " " : "") + "Elevation out of bounds — try a different charge.";
-        warnEl.style.display = "block";
-        elev = null;
-      }
-
-      const elevAdj = elev !== null ? elev + rangeCorrMils : null;
-      const deflAdj = (Math.round(bearDeg * MILS_DEG) + driftCorrMils + 6400) % 6400;
-
-      addMetric("Deflection", deflAdj, "mils (NATO 6400)");
-      addMetric("Elevation", elevAdj !== null ? elevAdj : "—", "mils");
-      addMetric("Time of flight", Math.round(tof) + "s", "approx.");
-
-      chargeRowEl.style.display = "flex";
-      const badge = document.getElementById("r-charge-badge");
-      badge.textContent = charge.name;
-      badge.style.color = charge.color;
-      badge.style.background = charge.bg;
-      document.getElementById("r-charge-range").textContent = `(${charge.min}–${charge.max} m)`;
-
-      const windParts = [];
-      if (Math.abs(hw) > 0.05) windParts.push(`headwind ${hw > 0 ? "+" : ""}${hw.toFixed(1)} m/s → elev ${rangeCorrMils > 0 ? "+" : ""}${rangeCorrMils} mils`);
-      if (Math.abs(cw) > 0.05) windParts.push(`crosswind ${cw > 0 ? "+" : ""}${cw.toFixed(1)} m/s → defl ${driftCorrMils > 0 ? "+" : ""}${driftCorrMils} mils`);
-      if (windParts.length > 0) { windNoteEl.textContent = "ACE wind applied — " + windParts.join(", ") + ". Already included in displayed values."; windNoteEl.style.display = "block"; }
-
-      result.defl = deflAdj; result.elev = elevAdj; result.charge = charge.name; result.tof = Math.round(tof) + "s";
+    const m=MORT[aw];
+    let ch=csv==='auto'?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
+    if(!ch){document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all charge ranges.`;document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+    else{
+      if(dist<ch.mn||dist>ch.mx){document.getElementById('warnNote').textContent=`${ch.n} range ${ch.mn}–${ch.mx}m.`;document.getElementById('warnNote').style.display='block';}
+      const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
+      let elev=mortarElev(dist,altDiff,ch.mv);
+      if(elev===null||elev<0||elev>1422){document.getElementById('warnNote').textContent=(document.getElementById('warnNote').style.display==='block'?document.getElementById('warnNote').textContent+' ':'')+'Elev OOB.';document.getElementById('warnNote').style.display='block';elev=null;}
+      const ea=elev!==null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea!==null?ea:'—','mils');addR('TOF',Math.round(tof)+'s','approx.');
+      document.getElementById('crRow').style.display='block';
+      const bd=document.getElementById('crBadge');bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
+      document.getElementById('crRange').textContent=`(${ch.mn}–${ch.mx}m)`;
+      const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→elev${rc>0?'+':''}${rc}`);if(Math.abs(cw)>0.05)wp.push(`CW→defl${dc>0?'+':''}${dc}`);
+      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' mils (included)';document.getElementById('windNote').style.display='block';}
+      result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+'s';
     }
   }
-
-  lastResult = result;
-  resEl.style.display = "block";
-  resEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  lastRes=result;res.style.display='block';
 }
 
-function logMission() {
-  if (!lastResult) return;
-  const id = "M" + String(missionCounter++).padStart(2, "0");
-  missionLog.unshift({ id, ...lastResult, ts: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) });
+// LOG
+function logMission(){
+  if(!lastRes)return;
+  const id='M'+String(mcnt++).padStart(2,'0');
+  mlog.unshift({id,...lastRes,ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
   renderLog();
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('[data-t="log"]').classList.add('on');
+  document.getElementById('t-log').classList.add('on');
 }
 
-function renderLog() {
-  const el = document.getElementById("log-list");
-  if (!missionLog.length) { el.innerHTML = '<div class="log-empty">No missions logged yet.</div>'; return; }
-  el.innerHTML = missionLog.map((m, i) => {
-    const lbl = m.label ? `<span class="log-custom">${m.label}</span>` : "";
-    const vals = [];
-    vals.push(`<div class="log-val"><span>Dist</span>${m.dist.toLocaleString()} m</div>`);
-    vals.push(`<div class="log-val"><span>Bearing</span>${m.bearDeg.toFixed(1)}°</div>`);
-    if (m.defl != null) vals.push(`<div class="log-val"><span>Defl</span>${m.defl}</div>`);
-    if (m.elev != null) vals.push(`<div class="log-val"><span>Elev</span>${m.elev}</div>`);
-    if (m.charge) vals.push(`<div class="log-val"><span>Charge</span>${m.charge}</div>`);
-    if (m.tof) vals.push(`<div class="log-val"><span>TOF</span>${m.tof}</div>`);
-    if (Math.abs(m.hw||0) > 0.05 || Math.abs(m.cw||0) > 0.05)
-      vals.push(`<div class="log-val"><span>Wind</span>HW${(m.hw||0)>0?"+":""}${(m.hw||0).toFixed(1)} CW${(m.cw||0)>0?"+":""}${(m.cw||0).toFixed(1)}</div>`);
-    return `<div class="log-entry">
-      <div class="log-entry-header">
-        <div class="log-meta">
-          <span class="log-id">${m.id}</span>
-          <span class="log-weapon">${m.weapon}</span>
-          ${lbl}
-        </div>
-        <div style="display:flex;align-items:center;">
-          <span class="log-time">${m.ts}</span>
-          <span class="log-remove" onclick="deleteEntry(${i})">remove</span>
-        </div>
-      </div>
-      <div class="log-vals">${vals.join("")}</div>
-    </div>`;
-  }).join("");
+function renderLog(){
+  const el=document.getElementById('logList');
+  if(!mlog.length){el.innerHTML='<div class="lempty">NO MISSIONS LOGGED</div>';return;}
+  el.innerHTML=mlog.map((m,i)=>{
+    const lbl=m.label?`<span class="llbl">${m.label}</span>`:'';
+    const vs=[];
+    vs.push(`<div class="lv"><span>Dist</span>${m.dist.toLocaleString()}m</div>`);
+    vs.push(`<div class="lv"><span>Brg</span>${m.bear.toFixed(1)}°</div>`);
+    if(m.defl!=null)vs.push(`<div class="lv"><span>Defl</span>${m.defl}</div>`);
+    if(m.elev!=null)vs.push(`<div class="lv"><span>Elev</span>${m.elev}</div>`);
+    if(m.charge)vs.push(`<div class="lv"><span>Chg</span>${m.charge}</div>`);
+    if(m.tof)vs.push(`<div class="lv"><span>TOF</span>${m.tof}</div>`);
+    if(Math.abs(m.hw||0)>0.05||Math.abs(m.cw||0)>0.05)vs.push(`<div class="lv"><span>Wind</span>HW${(m.hw||0)>0?'+':''}${(m.hw||0).toFixed(1)} CW${(m.cw||0)>0?'+':''}${(m.cw||0).toFixed(1)}</div>`);
+    return`<div class="lentry"><div class="lhdr"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="lid">${m.id}</span><span class="lwep">${m.weapon}</span>${lbl}</div><div style="display:flex;align-items:center;gap:6px;"><span class="ltime">${m.ts}</span><button class="btn-sm danger" onclick="delEntry(${i})">✕</button></div></div><div class="lvals">${vs.join('')}</div></div>`;
+  }).join('');
 }
 
-function deleteEntry(i) { missionLog.splice(i, 1); renderLog(); }
-function clearLog() { missionLog = []; missionCounter = 1; renderLog(); }
+function delEntry(i){mlog.splice(i,1);renderLog();}
+function clearLog(){mlog=[];mcnt=1;renderLog();}
 
-document.querySelectorAll("input[type=number], input[type=text]").forEach(el => {
-  el.addEventListener("keydown", e => { if (e.key === "Enter") calculate(); });
+// CHARGE SELECT
+function buildCS(){
+  const s=document.getElementById('csel');s.innerHTML='';
+  const a=document.createElement('option');a.value='auto';a.textContent='Auto (lowest valid charge)';s.appendChild(a);
+  if(aw==='m777'){M777C.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);});}
+  else{MORT[aw].c.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);});}
+}
+
+// EVENTS
+document.getElementById('wtabs').addEventListener('click',e=>{
+  const t=e.target.closest('.wtab');if(!t)return;
+  document.querySelectorAll('.wtab').forEach(w=>w.classList.remove('on'));
+  t.classList.add('on');aw=t.dataset.w;buildCS();
+  document.getElementById('resWrap').style.display='none';document.getElementById('err').style.display='none';lastRes=null;
 });
+
+document.querySelectorAll('.stab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.stab').forEach(s=>s.classList.remove('on'));
+    document.querySelectorAll('.tab').forEach(p=>p.classList.remove('on'));
+    t.classList.add('on');document.getElementById('t-'+t.dataset.t).classList.add('on');
+  });
+});
+
+document.querySelectorAll('input').forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')calc();}));
+
+buildCS();
+initMap();
 </script>
 </body>
 </html>
