@@ -176,11 +176,11 @@ const MAP_W=7130,MAP_H=9150,MAX_ZOOM=5,MIN_ZOOM=0;
 const MILS_DEG=6400/360;
 
 // Leaflet CRS.Simple: pixel coords = game coords scaled to [0,100]
-function g2ll(gx,gy){return L.latLng((gy/MAP_H)*100,(gx/MAP_W)*100);}
-function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/100)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/100)*MAP_H))};}
+function g2ll(gx,gy){return L.latLng((gy/MAP_H)*95,(gx/MAP_W)*71);}
+function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/71)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/95)*MAP_H))};}
 function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
 
-const bounds=L.latLngBounds(L.latLng(0,0),L.latLng(100,100));
+const bounds=L.latLngBounds(L.latLng(0,0),L.latLng(95,71));
 const map=L.map('map',{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSnap:0.5,zoomDelta:0.5,maxBounds:bounds,maxBoundsViscosity:0.8,attributionControl:false});
 
 // Custom tile layer — LOD 0=highest detail, LOD 5=lowest
@@ -190,6 +190,7 @@ L.TileLayer.Orlivka=L.TileLayer.extend({
     const lod=MAX_ZOOM-c.z;
     const LOD_Y={0:95,1:48,2:25,3:12,4:7,5:4};
     const flippedY=LOD_Y[lod]-1-c.y;
+    if(flippedY<0||flippedY>=LOD_Y[lod])return'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     return`Orlivka/LODS/${lod}/${c.x}/${flippedY}/tile.jpg`;
   }
 });
