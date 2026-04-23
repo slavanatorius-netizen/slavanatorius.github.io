@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -179,220 +178,226 @@ const MILS_DEG=6400/360;
 // Leaflet CRS.Simple: pixel coords = game coords scaled to [0,100]
 function g2ll(gx,gy){return L.latLng((gy/MAP_H)*100,(gx/MAP_W)*100);}
 function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/100)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/100)*MAP_H))};}
-function fmt(gx,gy){return String(gx).padStart(5,‘0’)+’ ’+String(gy).padStart(5,‘0’);}
+function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
 
 const bounds=L.latLngBounds(L.latLng(0,0),L.latLng(100,100));
-const map=L.map(‘map’,{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSnap:0.5,zoomDelta:0.5,maxBounds:bounds,maxBoundsViscosity:0.8,attributionControl:false});
+const map=L.map('map',{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSnap:0.5,zoomDelta:0.5,maxBounds:bounds,maxBoundsViscosity:0.8,attributionControl:false});
 
 // Custom tile layer — LOD 0=highest detail, LOD 5=lowest
 // Leaflet zoom 0=out, zoom 5=in — we invert
 L.TileLayer.Orlivka=L.TileLayer.extend({
-getTileUrl:function(c){
-const lod=MAX_ZOOM-c.z;
-return`Orlivka/LODS/${lod}/${c.x}/${c.y}/tile.jpg`;
-}
+  getTileUrl:function(c){
+    const lod=MAX_ZOOM-c.z;
+    return`Orlivka/LODS/${lod}/${c.x}/${c.y}/tile.jpg`;
+  }
 });
 new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,tms:true,bounds:bounds,
-errorTileUrl:‘data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7’}).addTo(map);
+  errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}).addTo(map);
 map.fitBounds(bounds);
 
-const mkIcon=(col,lbl)=>L.divIcon({className:’’,iconSize:[28,28],iconAnchor:[14,14],html:
-`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"> <circle cx="14" cy="14" r="11" fill="${col}22" stroke="${col}" stroke-width="2"/> <line x1="14" y1="1" x2="14" y2="9" stroke="${col}" stroke-width="1.5"/> <line x1="14" y1="19" x2="14" y2="27" stroke="${col}" stroke-width="1.5"/> <line x1="1" y1="14" x2="9" y2="14" stroke="${col}" stroke-width="1.5"/> <line x1="19" y1="14" x2="27" y2="14" stroke="${col}" stroke-width="1.5"/> <text x="14" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="${col}" font-family="Courier New">${lbl}</text> </svg>`});
+const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:
+  `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="14" cy="14" r="11" fill="${col}22" stroke="${col}" stroke-width="2"/>
+  <line x1="14" y1="1" x2="14" y2="9" stroke="${col}" stroke-width="1.5"/>
+  <line x1="14" y1="19" x2="14" y2="27" stroke="${col}" stroke-width="1.5"/>
+  <line x1="1" y1="14" x2="9" y2="14" stroke="${col}" stroke-width="1.5"/>
+  <line x1="19" y1="14" x2="27" y2="14" stroke="${col}" stroke-width="1.5"/>
+  <text x="14" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="${col}" font-family="Courier New">${lbl}</text>
+  </svg>`});
 
-const GUN_ICON=mkIcon(’#7eb34a’,‘G’),TGT_ICON=mkIcon(’#e05040’,‘T’);
+const GUN_ICON=mkIcon('#7eb34a','G'),TGT_ICON=mkIcon('#e05040','T');
 let gMkr=null,tMkr=null,line=null;
 
 function setG(gx,gy){
-const ll=g2ll(gx,gy);
-if(gMkr)gMkr.setLatLng(ll);
-else gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000}).addTo(map);
-document.getElementById(‘gunCoord’).textContent=fmt(gx,gy);
-drawLine();
+  const ll=g2ll(gx,gy);
+  if(gMkr)gMkr.setLatLng(ll);
+  else gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000}).addTo(map);
+  document.getElementById('gunCoord').textContent=fmt(gx,gy);
+  drawLine();
 }
 function setT(gx,gy){
-const ll=g2ll(gx,gy);
-if(tMkr)tMkr.setLatLng(ll);
-else tMkr=L.marker(ll,{icon:TGT_ICON,zIndexOffset:999}).addTo(map);
-document.getElementById(‘tgtCoord’).textContent=fmt(gx,gy);
-drawLine();
+  const ll=g2ll(gx,gy);
+  if(tMkr)tMkr.setLatLng(ll);
+  else tMkr=L.marker(ll,{icon:TGT_ICON,zIndexOffset:999}).addTo(map);
+  document.getElementById('tgtCoord').textContent=fmt(gx,gy);
+  drawLine();
 }
 function drawLine(){
-if(!gMkr||!tMkr)return;
-const pts=[gMkr.getLatLng(),tMkr.getLatLng()];
-if(line)line.setLatLngs(pts);
-else line=L.polyline(pts,{color:‘rgba(255,210,0,0.55)’,weight:1.5,dashArray:‘6,4’}).addTo(map);
+  if(!gMkr||!tMkr)return;
+  const pts=[gMkr.getLatLng(),tMkr.getLatLng()];
+  if(line)line.setLatLngs(pts);
+  else line=L.polyline(pts,{color:'rgba(255,210,0,0.55)',weight:1.5,dashArray:'6,4'}).addTo(map);
 }
-function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById(‘gunCoord’).textContent=‘Click map to set’;}
-function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById(‘tgtCoord’).textContent=’—’;}
+function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map to set';}
+function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('tgtCoord').textContent='—';}
 
-let staticMode=false,gunLocked=false,nextClick=‘gun’;
+let staticMode=false,gunLocked=false,nextClick='gun';
 
 function toggleMode(){
-staticMode=!staticMode;
-const b=document.getElementById(‘modeBadge’);
-if(staticMode){b.textContent=‘⬛ STATIC’;b.classList.add(‘son’);if(gMkr){gunLocked=true;nextClick=‘target’;}else{gunLocked=false;nextClick=‘gun’;}}
-else{b.textContent=‘□ MOVING’;b.classList.remove(‘son’);gunLocked=false;nextClick=gMkr?‘target’:‘gun’;}
-updateBanner();
+  staticMode=!staticMode;
+  const b=document.getElementById('modeBadge');
+  if(staticMode){b.textContent='⬛ STATIC';b.classList.add('son');if(gMkr){gunLocked=true;nextClick='target';}else{gunLocked=false;nextClick='gun';}}
+  else{b.textContent='□ MOVING';b.classList.remove('son');gunLocked=false;nextClick=gMkr?'target':'gun';}
+  updateBanner();
 }
-function resetGun(){clearG();clearT();gunLocked=false;nextClick=‘gun’;updateBanner();document.getElementById(‘resWrap’).style.display=‘none’;}
-function updateBanner(){document.getElementById(‘clickBanner’).textContent=nextClick===‘gun’?‘▶ CLICK — GUN POSITION’:‘▶ CLICK — TARGET POSITION’;}
+function resetGun(){clearG();clearT();gunLocked=false;nextClick='gun';updateBanner();document.getElementById('resWrap').style.display='none';}
+function updateBanner(){document.getElementById('clickBanner').textContent=nextClick==='gun'?'▶ CLICK — GUN POSITION':'▶ CLICK — TARGET POSITION';}
 
-map.on(‘click’,function(e){
-const gp=ll2g(e.latlng);
-if(nextClick===‘gun’){setG(gp.x,gp.y);nextClick=‘target’;if(staticMode)gunLocked=true;}
-else{setT(gp.x,gp.y);if(!staticMode)nextClick=‘gun’;}
-updateBanner();
+map.on('click',function(e){
+  const gp=ll2g(e.latlng);
+  if(nextClick==='gun'){setG(gp.x,gp.y);nextClick='target';if(staticMode)gunLocked=true;}
+  else{setT(gp.x,gp.y);if(!staticMode)nextClick='gun';}
+  updateBanner();
 });
-map.on(‘mousemove’,function(e){
-const gp=ll2g(e.latlng);
-document.getElementById(‘hud’).textContent=String(Math.max(0,gp.x)).padStart(5,‘0’)+’  ’+String(Math.max(0,gp.y)).padStart(5,‘0’);
+map.on('mousemove',function(e){
+  const gp=ll2g(e.latlng);
+  document.getElementById('hud').textContent=String(Math.max(0,gp.x)).padStart(5,'0')+'  '+String(Math.max(0,gp.y)).padStart(5,'0');
 });
 
 // BALLISTICS
 const M777C=[
-{name:“Charge 1”,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”,t:[[950,1245,24.4,24],[1000,1221,24.2,24],[1050,1197,24.0,26],[1100,1171,23.7,27],[1150,1144,23.4,29],[1200,1115,23.1,31],[1250,1084,22.7,34],[1300,1050,22.3,39],[1350,1011,21.8,46],[1400,965,21.2,58],[1450,907,20.3,107],[1500,800,18.6,null]]},
-{name:“Charge 2”,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”,t:[[1500,1270,33.1,13],[1550,1257,33.0,14],[1600,1243,32.9,14],[1650,1229,32.7,15],[1700,1214,32.5,14],[1750,1200,32.4,15],[1800,1185,32.1,16],[1850,1169,31.9,16],[1900,1153,31.7,17],[1950,1136,31.5,17],[2000,1119,31.2,18],[2050,1101,31.0,19],[2100,1082,30.7,20],[2150,1062,30.3,21],[2200,1041,30.0,23],[2250,1018,29.6,23],[2300,995,29.2,28],[2350,967,28.7,29],[2400,938,28.1,34],[2450,904,27.5,44],[2500,860,26.5,null]]},
-{name:“Charge 3”,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”,t:[[2100,1272,41.0,10],[2200,1253,40.8,10],[2300,1233,40.5,10],[2400,1213,40.2,11],[2500,1192,39.9,11],[2600,1170,39.5,12],[2700,1147,39.1,12],[2800,1123,38.7,13],[2900,1098,38.3,14],[3000,1070,37.7,14],[3100,1042,37.2,16],[3200,1010,36.5,16],[3300,975,35.7,18],[3400,936,34.9,22],[3500,890,33.7,28],[3600,828,32.1,null]]},
-{name:“Charge 4”,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”,t:[[2600,1271,47.2,8],[2700,1255,47.0,7],[2800,1240,46.7,8],[2900,1224,46.5,9],[3000,1207,46.2,9],[3100,1190,45.9,9],[3200,1172,45.6,9],[3300,1154,45.2,9],[3400,1135,44.9,9],[3500,1116,44.5,10],[3600,1095,44.0,10],[3700,1074,43.6,11],[3800,1052,43.1,12],[3900,1028,42.5,12],[4000,1003,41.9,14],[4100,976,41.3,15],[4200,946,40.5,17],[4300,912,39.6,17],[4400,874,38.5,20],[4500,828,37.2,26]]},
-{name:“Charge 5”,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”,t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
+  {name:"Charge 1",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[[950,1245,24.4,24],[1000,1221,24.2,24],[1050,1197,24.0,26],[1100,1171,23.7,27],[1150,1144,23.4,29],[1200,1115,23.1,31],[1250,1084,22.7,34],[1300,1050,22.3,39],[1350,1011,21.8,46],[1400,965,21.2,58],[1450,907,20.3,107],[1500,800,18.6,null]]},
+  {name:"Charge 2",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[[1500,1270,33.1,13],[1550,1257,33.0,14],[1600,1243,32.9,14],[1650,1229,32.7,15],[1700,1214,32.5,14],[1750,1200,32.4,15],[1800,1185,32.1,16],[1850,1169,31.9,16],[1900,1153,31.7,17],[1950,1136,31.5,17],[2000,1119,31.2,18],[2050,1101,31.0,19],[2100,1082,30.7,20],[2150,1062,30.3,21],[2200,1041,30.0,23],[2250,1018,29.6,23],[2300,995,29.2,28],[2350,967,28.7,29],[2400,938,28.1,34],[2450,904,27.5,44],[2500,860,26.5,null]]},
+  {name:"Charge 3",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[[2100,1272,41.0,10],[2200,1253,40.8,10],[2300,1233,40.5,10],[2400,1213,40.2,11],[2500,1192,39.9,11],[2600,1170,39.5,12],[2700,1147,39.1,12],[2800,1123,38.7,13],[2900,1098,38.3,14],[3000,1070,37.7,14],[3100,1042,37.2,16],[3200,1010,36.5,16],[3300,975,35.7,18],[3400,936,34.9,22],[3500,890,33.7,28],[3600,828,32.1,null]]},
+  {name:"Charge 4",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[[2600,1271,47.2,8],[2700,1255,47.0,7],[2800,1240,46.7,8],[2900,1224,46.5,9],[3000,1207,46.2,9],[3100,1190,45.9,9],[3200,1172,45.6,9],[3300,1154,45.2,9],[3400,1135,44.9,9],[3500,1116,44.5,10],[3600,1095,44.0,10],[3700,1074,43.6,11],[3800,1052,43.1,12],[3900,1028,42.5,12],[4000,1003,41.9,14],[4100,976,41.3,15],[4200,946,40.5,17],[4300,912,39.6,17],[4400,874,38.5,20],[4500,828,37.2,26]]},
+  {name:"Charge 5",col:"#854F0B",bg:"rgba(133,79,11,0.3)",t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
 ];
 const MORT={
-m252:{label:“M252 (81mm)”,wd:1.4,wr:1.8,c:[{n:“Charge 0”,mn:73,mx:490,mv:69,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:200,mx:900,mv:109,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:400,mx:1500,mv:147,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:700,mx:2100,mv:185,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:1000,mx:3000,mv:225,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1500,mx:4000,mv:273,col:”#A32D2D”,bg:“rgba(163,45,45,0.3)”},{n:“Charge 6”,mn:2000,mx:5608,mv:320,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]},
-m224:{label:“M224 (60mm)”,wd:1.8,wr:2.2,c:[{n:“Charge 0”,mn:40,mx:330,mv:55,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:100,mx:600,mv:89,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:200,mx:900,mv:120,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:400,mx:1200,mv:150,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:700,mx:1800,mv:185,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1000,mx:2490,mv:218,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]},
-“2b14”:{label:“2B14 (82mm)”,wd:1.5,wr:1.9,c:[{n:“Charge 0”,mn:80,mx:520,mv:72,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:250,mx:950,mv:115,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:450,mx:1600,mv:155,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:750,mx:2200,mv:196,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:1100,mx:3000,mv:238,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1600,mx:4270,mv:282,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]}
+  m252:{label:"M252 (81mm)",wd:1.4,wr:1.8,c:[{n:"Charge 0",mn:73,mx:490,mv:69,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:200,mx:900,mv:109,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:400,mx:1500,mv:147,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:700,mx:2100,mv:185,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1000,mx:3000,mv:225,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1500,mx:4000,mv:273,col:"#A32D2D",bg:"rgba(163,45,45,0.3)"},{n:"Charge 6",mn:2000,mx:5608,mv:320,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
+  m224:{label:"M224 (60mm)",wd:1.8,wr:2.2,c:[{n:"Charge 0",mn:40,mx:330,mv:55,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:100,mx:600,mv:89,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:200,mx:900,mv:120,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:400,mx:1200,mv:150,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:700,mx:1800,mv:185,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1000,mx:2490,mv:218,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
+  "2b14":{label:"2B14 (82mm)",wd:1.5,wr:1.9,c:[{n:"Charge 0",mn:80,mx:520,mv:72,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:250,mx:950,mv:115,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:450,mx:1600,mv:155,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:750,mx:2200,mv:196,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1100,mx:3000,mv:238,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1600,mx:4270,mv:282,col:"#555550",bg:"rgba(85,85,80,0.3)"}]}
 };
 
-let aw=“m777”,lastRes=null,mlog=[],mcnt=1;
+let aw="m777",lastRes=null,mlog=[],mcnt=1;
 
 function interp(tbl,dist){
-if(dist<=tbl[0][0])return[…tbl[0]];
-if(dist>=tbl[tbl.length-1][0])return[…tbl[tbl.length-1]];
-for(let i=0;i<tbl.length-1;i++){
-const a=tbl[i],b=tbl[i+1];
-if(dist>=a[0]&&dist<=b[0]){
-const t=(dist-a[0])/(b[0]-a[0]);
-return[dist,Math.round(a[1]+(b[1]-a[1])*t),parseFloat((a[2]+(b[2]-a[2])*t).toFixed(1)),(a[3]!=null&&b[3]!=null)?parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)):null];
-}
-}
-return[…tbl[tbl.length-1]];
+  if(dist<=tbl[0][0])return[...tbl[0]];
+  if(dist>=tbl[tbl.length-1][0])return[...tbl[tbl.length-1]];
+  for(let i=0;i<tbl.length-1;i++){
+    const a=tbl[i],b=tbl[i+1];
+    if(dist>=a[0]&&dist<=b[0]){
+      const t=(dist-a[0])/(b[0]-a[0]);
+      return[dist,Math.round(a[1]+(b[1]-a[1])*t),parseFloat((a[2]+(b[2]-a[2])*t).toFixed(1)),(a[3]!=null&&b[3]!=null)?parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)):null];
+    }
+  }
+  return[...tbl[tbl.length-1]];
 }
 function bestM777(d){for(const c of M777C){if(d>=c.t[0][0]&&d<=c.t[c.t.length-1][0])return c;}return null;}
 function mortElev(d,h,mv){const g=9.81,v2=mv*mv,disc=v2*v2-g*(g*d*d+2*h*v2);if(disc<0)return null;return Math.round(Math.atan((v2-Math.sqrt(disc))/(g*d))*(180/Math.PI)*MILS_DEG);}
 function gv(id){return parseFloat(document.getElementById(id).value);}
 
 function calc(){
-const err=document.getElementById(‘err’),res=document.getElementById(‘resWrap’);
-err.style.display=‘none’;res.style.display=‘none’;lastRes=null;
-if(!gMkr){err.textContent=‘Set gun position on map first.’;err.style.display=‘block’;return;}
-if(!tMkr){err.textContent=‘Set target position on map first.’;err.style.display=‘block’;return;}
-const gun=ll2g(gMkr.getLatLng()),tgt=ll2g(tMkr.getLatLng());
-const galt=isNaN(gv(‘galt’))?0:gv(‘galt’),talt=isNaN(gv(‘talt’))?0:gv(‘talt’);
-const hw=isNaN(gv(‘hw’))?0:gv(‘hw’),cw=isNaN(gv(‘cw’))?0:gv(‘cw’);
-const dx=tgt.x-gun.x,dy=tgt.y-gun.y,dist=Math.sqrt(dx*dx+dy*dy),altDiff=talt-galt;
-let bear=Math.atan2(dx,dy)*(180/Math.PI);if(bear<0)bear+=360;
-[‘warnNote’,‘windNote’,‘altNote’].forEach(id=>document.getElementById(id).style.display=‘none’);
-document.getElementById(‘crRow’).style.display=‘none’;
-const rg=document.getElementById(‘rgrid’);rg.innerHTML=’’;
-const addR=(l,v,u,w=false)=>{rg.innerHTML+=`<div class="rcard${w?' wide':''}"><div class="rlbl">${l}</div><div class="rval">${v}</div><div class="runit">${u}</div></div>`;};
-addR(‘Distance’,Math.round(dist).toLocaleString(),‘meters’);
-addR(‘Bearing’,bear.toFixed(1)+‘°’,‘degrees true’);
-const csv=document.getElementById(‘csel’).value;
-const wlbl=aw===‘m777’?‘M777 (155mm)’:MORT[aw].label;
-let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById(‘mlabel’).value.trim(),hw,cw,
-gunC:fmt(gun.x,gun.y),tgtC:fmt(tgt.x,tgt.y)};
+  const err=document.getElementById('err'),res=document.getElementById('resWrap');
+  err.style.display='none';res.style.display='none';lastRes=null;
+  if(!gMkr){err.textContent='Set gun position on map first.';err.style.display='block';return;}
+  if(!tMkr){err.textContent='Set target position on map first.';err.style.display='block';return;}
+  const gun=ll2g(gMkr.getLatLng()),tgt=ll2g(tMkr.getLatLng());
+  const galt=isNaN(gv('galt'))?0:gv('galt'),talt=isNaN(gv('talt'))?0:gv('talt');
+  const hw=isNaN(gv('hw'))?0:gv('hw'),cw=isNaN(gv('cw'))?0:gv('cw');
+  const dx=tgt.x-gun.x,dy=tgt.y-gun.y,dist=Math.sqrt(dx*dx+dy*dy),altDiff=talt-galt;
+  let bear=Math.atan2(dx,dy)*(180/Math.PI);if(bear<0)bear+=360;
+  ['warnNote','windNote','altNote'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('crRow').style.display='none';
+  const rg=document.getElementById('rgrid');rg.innerHTML='';
+  const addR=(l,v,u,w=false)=>{rg.innerHTML+=`<div class="rcard${w?' wide':''}"><div class="rlbl">${l}</div><div class="rval">${v}</div><div class="runit">${u}</div></div>`;};
+  addR('Distance',Math.round(dist).toLocaleString(),'meters');
+  addR('Bearing',bear.toFixed(1)+'°','degrees true');
+  const csv=document.getElementById('csel').value;
+  const wlbl=aw==='m777'?'M777 (155mm)':MORT[aw].label;
+  let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById('mlabel').value.trim(),hw,cw,
+    gunC:fmt(gun.x,gun.y),tgtC:fmt(tgt.x,tgt.y)};
 
-if(aw===‘m777’){
-let ch=csv===‘auto’?bestM777(dist):M777C[parseInt(csv)];
-if(!ch){document.getElementById(‘warnNote’).textContent=`${Math.round(dist)}m outside all M777 ranges.`;document.getElementById(‘warnNote’).style.display=‘block’;addR(‘Deflection’,’—’,‘mils’);addR(‘Elevation’,’—’,‘mils’);result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
-else{
-const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
-if(dist<mn||dist>mx){document.getElementById(‘warnNote’).textContent=`${ch.name}: ${mn}–${mx}m. Got ${Math.round(dist)}m.`;document.getElementById(‘warnNote’).style.display=‘block’;}
-const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
-let ac=0;if(dE!=null&&Math.abs(altDiff)>1){ac=Math.round((altDiff/100)*dE);elev-=ac;document.getElementById(‘altNote’).textContent=`Alt: ${altDiff>0?'+':''}${altDiff}m → ${ac>0?'−':'+'}${Math.abs(ac)} mils`;document.getElementById(‘altNote’).style.display=‘block’;}
-const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
-const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
-addR(‘Deflection’,da,‘mils (NATO 6400)’);addR(‘Elevation’,ea,‘mils’);addR(‘TOF’,tof.toFixed(1)+‘s’,‘from table’);
-document.getElementById(‘crRow’).style.display=‘block’;
-const bd=document.getElementById(‘crBadge’);bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
-document.getElementById(‘crRange’).textContent=`(${mn}–${mx}m)`;
-const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
-if(wp.length){document.getElementById(‘windNote’).textContent=‘Wind: ‘+wp.join(’, ‘)+’ (included)’;document.getElementById(‘windNote’).style.display=‘block’;}
-result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+‘s’;
-}
-} else {
-const m=MORT[aw];
-let ch=csv===‘auto’?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
-if(!ch){document.getElementById(‘warnNote’).textContent=`${Math.round(dist)}m outside all charge ranges.`;document.getElementById(‘warnNote’).style.display=‘block’;addR(‘Deflection’,’—’,‘mils’);addR(‘Elevation’,’—’,‘mils’);result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
-else{
-if(dist<ch.mn||dist>ch.mx){document.getElementById(‘warnNote’).textContent=`${ch.n}: ${ch.mn}–${ch.mx}m.`;document.getElementById(‘warnNote’).style.display=‘block’;}
-const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
-let elev=mortElev(dist,altDiff,ch.mv);
-if(elev==null||elev<0||elev>1422){document.getElementById(‘warnNote’).textContent=(document.getElementById(‘warnNote’).style.display===‘block’?document.getElementById(‘warnNote’).textContent+’ ‘:’’)+‘Elev OOB.’;document.getElementById(‘warnNote’).style.display=‘block’;elev=null;}
-const ea=elev!=null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
-addR(‘Deflection’,da,‘mils (NATO 6400)’);addR(‘Elevation’,ea!=null?ea:’—’,‘mils’);addR(‘TOF’,Math.round(tof)+‘s’,‘approx.’);
-document.getElementById(‘crRow’).style.display=‘block’;
-const bd=document.getElementById(‘crBadge’);bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
-document.getElementById(‘crRange’).textContent=`(${ch.mn}–${ch.mx}m)`;
-const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
-if(wp.length){document.getElementById(‘windNote’).textContent=‘Wind: ‘+wp.join(’, ‘)+’ (included)’;document.getElementById(‘windNote’).style.display=‘block’;}
-result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+‘s’;
-}
-}
-lastRes=result;res.style.display=‘block’;
+  if(aw==='m777'){
+    let ch=csv==='auto'?bestM777(dist):M777C[parseInt(csv)];
+    if(!ch){document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all M777 ranges.`;document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+    else{
+      const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
+      if(dist<mn||dist>mx){document.getElementById('warnNote').textContent=`${ch.name}: ${mn}–${mx}m. Got ${Math.round(dist)}m.`;document.getElementById('warnNote').style.display='block';}
+      const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
+      let ac=0;if(dE!=null&&Math.abs(altDiff)>1){ac=Math.round((altDiff/100)*dE);elev-=ac;document.getElementById('altNote').textContent=`Alt: ${altDiff>0?'+':''}${altDiff}m → ${ac>0?'−':'+'}${Math.abs(ac)} mils`;document.getElementById('altNote').style.display='block';}
+      const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
+      const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea,'mils');addR('TOF',tof.toFixed(1)+'s','from table');
+      document.getElementById('crRow').style.display='block';
+      const bd=document.getElementById('crBadge');bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
+      document.getElementById('crRange').textContent=`(${mn}–${mx}m)`;
+      const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
+      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' (included)';document.getElementById('windNote').style.display='block';}
+      result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+'s';
+    }
+  } else {
+    const m=MORT[aw];
+    let ch=csv==='auto'?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
+    if(!ch){document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all charge ranges.`;document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+    else{
+      if(dist<ch.mn||dist>ch.mx){document.getElementById('warnNote').textContent=`${ch.n}: ${ch.mn}–${ch.mx}m.`;document.getElementById('warnNote').style.display='block';}
+      const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
+      let elev=mortElev(dist,altDiff,ch.mv);
+      if(elev==null||elev<0||elev>1422){document.getElementById('warnNote').textContent=(document.getElementById('warnNote').style.display==='block'?document.getElementById('warnNote').textContent+' ':'')+'Elev OOB.';document.getElementById('warnNote').style.display='block';elev=null;}
+      const ea=elev!=null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea!=null?ea:'—','mils');addR('TOF',Math.round(tof)+'s','approx.');
+      document.getElementById('crRow').style.display='block';
+      const bd=document.getElementById('crBadge');bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
+      document.getElementById('crRange').textContent=`(${ch.mn}–${ch.mx}m)`;
+      const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
+      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' (included)';document.getElementById('windNote').style.display='block';}
+      result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+'s';
+    }
+  }
+  lastRes=result;res.style.display='block';
 }
 
 function logMission(){
-if(!lastRes)return;
-const id=‘M’+String(mcnt++).padStart(2,‘0’);
-mlog.unshift({id,…lastRes,ts:new Date().toLocaleTimeString([],{hour:‘2-digit’,minute:‘2-digit’})});
-renderLog();
-document.querySelectorAll(’.stab’).forEach(t=>t.classList.remove(‘on’));
-document.querySelectorAll(’.tab’).forEach(t=>t.classList.remove(‘on’));
-document.querySelector(’[data-t=“log”]’).classList.add(‘on’);
-document.getElementById(‘t-log’).classList.add(‘on’);
+  if(!lastRes)return;
+  const id='M'+String(mcnt++).padStart(2,'0');
+  mlog.unshift({id,...lastRes,ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
+  renderLog();
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelector('[data-t="log"]').classList.add('on');
+  document.getElementById('t-log').classList.add('on');
 }
 function renderLog(){
-const el=document.getElementById(‘logList’);
-if(!mlog.length){el.innerHTML=’<div class="lempty">NO MISSIONS LOGGED</div>’;return;}
-el.innerHTML=mlog.map((m,i)=>{
-const lbl=m.label?`<span class="llbl">${m.label}</span>`:’’;
-const vs=[];
-vs.push(`<div class="lv"><span>Gun</span>${m.gunC||'—'}</div>`);
-vs.push(`<div class="lv"><span>Tgt</span>${m.tgtC||'—'}</div>`);
-vs.push(`<div class="lv"><span>Dist</span>${m.dist.toLocaleString()}m</div>`);
-vs.push(`<div class="lv"><span>Brg</span>${m.bear.toFixed(1)}°</div>`);
-if(m.defl!=null)vs.push(`<div class="lv"><span>Defl</span>${m.defl}</div>`);
-if(m.elev!=null)vs.push(`<div class="lv"><span>Elev</span>${m.elev}</div>`);
-if(m.charge)vs.push(`<div class="lv"><span>Chg</span>${m.charge}</div>`);
-if(m.tof)vs.push(`<div class="lv"><span>TOF</span>${m.tof}</div>`);
-return`<div class="lentry"><div class="lhdr"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="lid">${m.id}</span><span class="lwep">${m.weapon}</span>${lbl}</div><div style="display:flex;align-items:center;gap:6px;"><span class="ltime">${m.ts}</span><button class="btn-sm danger" onclick="delEntry(${i})">✕</button></div></div><div class="lvals">${vs.join('')}</div></div>`;
-}).join(’’);
+  const el=document.getElementById('logList');
+  if(!mlog.length){el.innerHTML='<div class="lempty">NO MISSIONS LOGGED</div>';return;}
+  el.innerHTML=mlog.map((m,i)=>{
+    const lbl=m.label?`<span class="llbl">${m.label}</span>`:'';
+    const vs=[];
+    vs.push(`<div class="lv"><span>Gun</span>${m.gunC||'—'}</div>`);
+    vs.push(`<div class="lv"><span>Tgt</span>${m.tgtC||'—'}</div>`);
+    vs.push(`<div class="lv"><span>Dist</span>${m.dist.toLocaleString()}m</div>`);
+    vs.push(`<div class="lv"><span>Brg</span>${m.bear.toFixed(1)}°</div>`);
+    if(m.defl!=null)vs.push(`<div class="lv"><span>Defl</span>${m.defl}</div>`);
+    if(m.elev!=null)vs.push(`<div class="lv"><span>Elev</span>${m.elev}</div>`);
+    if(m.charge)vs.push(`<div class="lv"><span>Chg</span>${m.charge}</div>`);
+    if(m.tof)vs.push(`<div class="lv"><span>TOF</span>${m.tof}</div>`);
+    return`<div class="lentry"><div class="lhdr"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="lid">${m.id}</span><span class="lwep">${m.weapon}</span>${lbl}</div><div style="display:flex;align-items:center;gap:6px;"><span class="ltime">${m.ts}</span><button class="btn-sm danger" onclick="delEntry(${i})">✕</button></div></div><div class="lvals">${vs.join('')}</div></div>`;
+  }).join('');
 }
 function delEntry(i){mlog.splice(i,1);renderLog();}
 function clearLog(){mlog=[];mcnt=1;renderLog();}
 
 function buildCS(){
-const s=document.getElementById(‘csel’);s.innerHTML=’’;
-const a=document.createElement(‘option’);a.value=‘auto’;a.textContent=‘Auto (lowest valid charge)’;s.appendChild(a);
-if(aw===‘m777’){M777C.forEach((c,i)=>{const o=document.createElement(‘option’);o.value=i;o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);});}
-else{MORT[aw].c.forEach((c,i)=>{const o=document.createElement(‘option’);o.value=i;o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);});}
+  const s=document.getElementById('csel');s.innerHTML='';
+  const a=document.createElement('option');a.value='auto';a.textContent='Auto (lowest valid charge)';s.appendChild(a);
+  if(aw==='m777'){M777C.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);});}
+  else{MORT[aw].c.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);});}
 }
-document.getElementById(‘wtabs’).addEventListener(‘click’,e=>{
-const t=e.target.closest(’.wtab’);if(!t)return;
-document.querySelectorAll(’.wtab’).forEach(w=>w.classList.remove(‘on’));
-t.classList.add(‘on’);aw=t.dataset.w;buildCS();
-document.getElementById(‘resWrap’).style.display=‘none’;document.getElementById(‘err’).style.display=‘none’;lastRes=null;
+document.getElementById('wtabs').addEventListener('click',e=>{
+  const t=e.target.closest('.wtab');if(!t)return;
+  document.querySelectorAll('.wtab').forEach(w=>w.classList.remove('on'));
+  t.classList.add('on');aw=t.dataset.w;buildCS();
+  document.getElementById('resWrap').style.display='none';document.getElementById('err').style.display='none';lastRes=null;
 });
-document.querySelectorAll(’.stab’).forEach(t=>{
-t.addEventListener(‘click’,()=>{
-document.querySelectorAll(’.stab’).forEach(s=>s.classList.remove(‘on’));
-document.querySelectorAll(’.tab’).forEach(p=>p.classList.remove(‘on’));
-t.classList.add(‘on’);document.getElementById(‘t-’+t.dataset.t).classList.add(‘on’);
+document.querySelectorAll('.stab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.stab').forEach(s=>s.classList.remove('on'));
+    document.querySelectorAll('.tab').forEach(p=>p.classList.remove('on'));
+    t.classList.add('on');document.getElementById('t-'+t.dataset.t).classList.add('on');
+  });
 });
-});
-document.querySelectorAll(‘input’).forEach(el=>el.addEventListener(‘keydown’,e=>{if(e.key===‘Enter’)calc();}));
+document.querySelectorAll('input').forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')calc();}));
 buildCS();
 </script>
-
 </body>
 </html>
