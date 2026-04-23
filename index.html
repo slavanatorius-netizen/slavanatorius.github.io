@@ -1,190 +1,80 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ACE Fire Mission Calculator — by Fentastic</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="leaflet/leaflet.css"/>
+<script src="leaflet/leaflet.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg:#1a1c18;--surface:#22251e;--surface2:#2a2e25;--surface3:#32372c;
   --border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);
   --text:#e8e4d8;--text2:#a8a494;--text3:#686558;
-  --accent:#7eb34a;--accent2:#5a8234;--accent3:#3d5e1e;
-  --danger:#c0392b;--warning:#c07a20;
-  --radius:8px;--radius-sm:5px;
+  --accent:#7eb34a;--accent2:#5a8234;
+  --danger:#c0392b;--warning:#c07a20;--r:7px;--rs:5px;
 }
-
 html,body{height:100%;overflow:hidden;font-family:'Courier New',monospace;background:var(--bg);color:var(--text);}
-
-/* ── LAYOUT ── */
 .app{display:flex;flex-direction:column;height:100vh;}
-
-header{
-  background:var(--surface);border-bottom:1px solid var(--border);
-  padding:7px 14px;display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;gap:10px;z-index:1000;
-}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:10px;z-index:1000;position:relative;}
 .hdr-l{display:flex;align-items:center;gap:10px;}
-.logo{width:28px;height:28px;background:var(--accent3);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.logo svg{width:15px;height:15px;fill:var(--text);}
-.hdr-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text);}
+.logo{width:28px;height:28px;background:var(--accent2);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.logo svg{width:14px;height:14px;fill:var(--text);}
+.hdr-title{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
 .hdr-sub{font-size:9px;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;margin-top:1px;}
-.hdr-ver .ver{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.1em;}
-.hdr-ver .by{font-size:9px;color:var(--text3);text-align:right;margin-top:1px;}
-
+.ver{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.1em;}
+.by{font-size:9px;color:var(--text3);text-align:right;margin-top:1px;}
 .main{display:flex;flex:1;overflow:hidden;}
-
-/* ── MAP ── */
-.map-wrap{flex:1;position:relative;overflow:hidden;}
-#map{width:100%;height:100%;background:#1a1c18;}
-
-/* Leaflet overrides */
-.leaflet-container{background:#1a1c18;font-family:'Courier New',monospace;}
-.leaflet-control-zoom a{background:var(--surface2);color:var(--text);border-color:var(--border2);}
-.leaflet-control-zoom a:hover{background:var(--surface3);}
-
-/* Map HUD overlays */
-.map-hud{
-  position:absolute;bottom:10px;left:10px;z-index:500;
-  background:rgba(0,0,0,0.75);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:4px 10px;
-  font-size:11px;color:var(--accent);letter-spacing:.05em;
-  pointer-events:none;
-}
-.mode-banner{
-  position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:500;
-  background:var(--accent3);border:1px solid var(--accent);
-  border-radius:var(--radius);padding:5px 16px;
-  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--text);pointer-events:none;white-space:nowrap;
-}
-.mode-badge{
-  position:absolute;top:10px;right:10px;z-index:500;
-  background:rgba(0,0,0,0.75);border:1px solid var(--border2);
-  border-radius:var(--radius-sm);padding:4px 10px;
-  font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--text2);
-}
-.mode-badge.static-on{color:var(--warning);border-color:rgba(192,122,32,0.4);}
-
-/* ── SIDEBAR ── */
-.sidebar{
-  width:310px;flex-shrink:0;background:var(--surface);
-  border-left:1px solid var(--border);display:flex;flex-direction:column;
-  overflow:hidden;
-}
+#map{flex:1;background:#0d0f0b;z-index:1;}
+.map-wrap{flex:1;position:relative;display:flex;}
+.sidebar{width:300px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;z-index:100;}
 .stabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
-.stab{
-  flex:1;padding:8px 4px;font-size:9px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;text-align:center;cursor:pointer;color:var(--text3);
-  border-bottom:2px solid transparent;transition:all .15s;
-}
+.stab{flex:1;padding:8px 4px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s;}
 .stab.on{color:var(--accent);border-bottom-color:var(--accent);}
 .scontent{flex:1;overflow-y:auto;padding:10px;}
 .scontent::-webkit-scrollbar{width:3px;}
 .scontent::-webkit-scrollbar-thumb{background:var(--surface3);}
-.tab{display:none;}
-.tab.on{display:block;}
-
-/* ── FORM ── */
+.tab{display:none;}.tab.on{display:block;}
+.map-hud{position:absolute;bottom:28px;left:10px;z-index:900;background:rgba(0,0,0,0.78);border:1px solid var(--border);border-radius:var(--rs);padding:4px 10px;font-size:11px;color:var(--accent);pointer-events:none;letter-spacing:.05em;}
+.click-banner{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:900;background:var(--accent2);border:1px solid var(--accent);border-radius:var(--r);padding:5px 14px;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;pointer-events:none;white-space:nowrap;}
+.mode-badge{position:absolute;top:10px;right:10px;z-index:900;background:rgba(0,0,0,0.75);border:1px solid var(--border2);border-radius:var(--rs);padding:4px 10px;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;color:var(--text2);transition:all .15s;}
+.mode-badge:hover{border-color:var(--accent);color:var(--accent);}
+.mode-badge.son{color:var(--warning);border-color:var(--warning);}
 .sec{font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin:12px 0 5px;}
 .sec:first-child{margin-top:0;}
 .field{display:flex;flex-direction:column;gap:3px;margin-bottom:7px;}
 .field label{font-size:9px;color:var(--text2);letter-spacing:.06em;text-transform:uppercase;}
-.field input,.field select{
-  font-size:12px;font-family:'Courier New',monospace;
-  padding:6px 8px;border:1px solid var(--border2);border-radius:var(--radius-sm);
-  background:var(--surface2);color:var(--text);width:100%;outline:none;
-  transition:border-color .15s;-webkit-appearance:none;appearance:none;
-}
+.field input,.field select{font-size:12px;font-family:'Courier New',monospace;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);width:100%;outline:none;transition:border-color .15s;-webkit-appearance:none;appearance:none;}
 .field input:focus,.field select:focus{border-color:var(--accent);}
-.field select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23686558' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;
-}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23686558' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:24px;}
 .hint{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.3;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-
-/* Weapon tabs */
 .wtabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;}
-.wtab{
-  padding:4px 9px;font-size:9px;font-weight:700;letter-spacing:.08em;
-  border:1px solid var(--border2);border-radius:var(--radius-sm);
-  cursor:pointer;background:var(--surface2);color:var(--text3);
-  transition:all .12s;text-transform:uppercase;
-}
-.wtab.on{background:var(--accent3);color:var(--text);border-color:var(--accent3);}
-
-/* Coord row with map pick */
-.crow{display:flex;gap:5px;align-items:flex-end;}
-.crow .field{flex:1;}
-.mpick{
-  padding:6px 7px;font-size:11px;border:1px solid var(--accent3);
-  border-radius:var(--radius-sm);background:var(--surface2);color:var(--accent);
-  cursor:pointer;height:30px;transition:all .12s;flex-shrink:0;
-}
-.mpick:hover,.mpick.on{background:var(--accent3);color:var(--text);}
-
-/* Static mode toggle */
-.static-toggle{
-  display:flex;align-items:center;gap:8px;
-  background:var(--surface2);border:1px solid var(--border2);
-  border-radius:var(--radius-sm);padding:7px 10px;margin-bottom:8px;cursor:pointer;
-  transition:all .12s;
-}
-.static-toggle:hover{border-color:var(--border2);}
-.static-toggle.on{border-color:var(--warning);background:rgba(192,122,32,0.1);}
-.toggle-switch{
-  width:28px;height:14px;background:var(--surface3);border-radius:7px;
-  position:relative;flex-shrink:0;transition:background .2s;
-}
-.toggle-switch::after{
-  content:'';position:absolute;top:2px;left:2px;
-  width:10px;height:10px;border-radius:50%;background:var(--text3);
-  transition:all .2s;
-}
-.static-toggle.on .toggle-switch{background:var(--warning);}
-.static-toggle.on .toggle-switch::after{left:16px;background:var(--text);}
-.toggle-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);}
-.static-toggle.on .toggle-label{color:var(--warning);}
-
-/* Buttons */
-.btn-calc{
-  width:100%;padding:9px;font-size:11px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;cursor:pointer;border-radius:var(--radius-sm);
-  border:none;background:var(--accent3);color:var(--text);
-  font-family:'Courier New',monospace;margin-top:4px;transition:background .15s,transform .1s;
-}
-.btn-calc:hover{background:var(--accent2);}
+.wtab{padding:4px 9px;font-size:9px;font-weight:700;letter-spacing:.08em;border:1px solid var(--border2);border-radius:var(--rs);cursor:pointer;background:var(--surface2);color:var(--text3);transition:all .12s;text-transform:uppercase;}
+.wtab.on{background:var(--accent2);color:var(--text);border-color:var(--accent2);}
+.pos-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:7px 10px;margin-bottom:7px;display:flex;justify-content:space-between;align-items:center;}
+.pos-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px;}
+.pos-val{font-size:12px;font-weight:700;color:var(--accent);}
+.btn-calc{width:100%;padding:9px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border-radius:var(--rs);border:none;background:var(--accent2);color:var(--text);font-family:'Courier New',monospace;margin-top:4px;transition:background .15s,transform .1s;}
+.btn-calc:hover{background:var(--accent);}
 .btn-calc:active{transform:scale(.98);}
-.btn-sm{
-  padding:4px 10px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  cursor:pointer;border-radius:var(--radius-sm);border:1px solid var(--border2);
-  background:var(--surface2);color:var(--text2);font-family:'Courier New',monospace;transition:all .12s;
-}
+.btn-sm{padding:4px 10px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border-radius:var(--rs);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-family:'Courier New',monospace;transition:all .12s;}
 .btn-sm:hover{color:var(--text);}
 .btn-sm.danger:hover{color:var(--danger);border-color:var(--danger);}
-.btn-sm.warn-btn{border-color:rgba(192,122,32,0.4);color:var(--warning);}
-.btn-sm.warn-btn:hover{background:rgba(192,122,32,0.1);}
-
-/* Results */
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px;}
-.rcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px;}
+.rcard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:7px 9px;}
 .rcard.wide{grid-column:1/-1;}
 .rlbl{font-size:8px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);margin-bottom:2px;}
 .rval{font-size:20px;font-weight:700;color:var(--accent);line-height:1;}
 .runit{font-size:8px;color:var(--text3);margin-top:2px;}
 .badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 9px;border-radius:20px;}
-.note{font-size:9px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 8px;margin-top:4px;line-height:1.5;}
+.note{font-size:9px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:5px 8px;margin-top:4px;line-height:1.5;}
 .note.warn{color:var(--warning);border-color:rgba(192,122,32,0.3);}
 .note.err{color:var(--danger);}
-
-/* Mission Log */
-.lentry{border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 9px;margin-bottom:5px;background:var(--surface2);}
-.lhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;flex-wrap:wrap;gap:4px;}
+.lentry{border:1px solid var(--border);border-radius:var(--rs);padding:7px 9px;margin-bottom:5px;background:var(--surface2);}
+.lhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
 .lid{font-size:11px;font-weight:700;color:var(--accent);}
 .lwep{font-size:8px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
 .llbl{font-size:9px;color:var(--text2);font-style:italic;}
@@ -194,24 +84,19 @@ header{
 .lv span{font-size:8px;font-weight:400;color:var(--text3);margin-right:2px;text-transform:uppercase;}
 .lempty{font-size:10px;color:var(--text3);text-align:center;padding:2rem 0;letter-spacing:.1em;}
 .lctrl{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
-
-/* ── MOBILE ── */
-@media(max-width:700px){
+@media(max-width:640px){
   .main{flex-direction:column;}
-  .sidebar{width:100%;border-left:none;border-top:1px solid var(--border);max-height:55vh;flex-shrink:0;}
-  .map-wrap{flex:1;min-height:200px;}
+  .sidebar{width:100%;border-left:none;border-top:1px solid var(--border);max-height:55vh;}
+  .map-wrap{min-height:45vh;flex:none;}
   .hdr-sub{display:none;}
-  header{padding:6px 10px;}
 }
-@media(max-width:400px){
-  .sidebar{max-height:60vh;}
-  .hdr-title{font-size:10px;}
-}
+.leaflet-container{background:#0d0f0b;font-family:'Courier New',monospace;}
+.leaflet-control-zoom a{background:var(--surface2)!important;color:var(--text)!important;border:1px solid var(--border2)!important;}
+.leaflet-control-zoom a:hover{background:var(--surface3)!important;color:var(--accent)!important;}
 </style>
 </head>
 <body>
 <div class="app">
-
 <header>
   <div class="hdr-l">
     <div class="logo"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
@@ -220,33 +105,22 @@ header{
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div class="hdr-ver">
-    <div class="ver">Ver 0.2.0</div>
-    <div class="by">by Fentastic</div>
-  </div>
+  <div style="text-align:right;"><div class="ver">Ver 0.2.0</div><div class="by">by Fentastic</div></div>
 </header>
-
 <div class="main">
-
-  <!-- MAP -->
   <div class="map-wrap">
     <div id="map"></div>
-    <div class="map-hud" id="hud">----- &nbsp; -----</div>
-    <div class="mode-banner" id="modeBanner">&#x25B6; NEXT: GUN POSITION</div>
-    <div class="mode-badge" id="modeBadge">MOVING MODE</div>
+    <div class="map-hud" id="hud">----- -----</div>
+    <div class="click-banner" id="clickBanner">▶ CLICK — GUN POSITION</div>
+    <div class="mode-badge" id="modeBadge" onclick="toggleMode()">□ MOVING</div>
   </div>
-
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="stabs">
       <div class="stab on" data-t="fire">Fire Mission</div>
       <div class="stab" data-t="log">Mission Log</div>
     </div>
     <div class="scontent">
-
-      <!-- FIRE TAB -->
       <div class="tab on" id="t-fire">
-
         <div class="sec">Weapon</div>
         <div class="wtabs" id="wtabs">
           <div class="wtab on" data-w="m777">M777</div>
@@ -254,59 +128,28 @@ header{
           <div class="wtab" data-w="m224">M224</div>
           <div class="wtab" data-w="2b14">2B14</div>
         </div>
-
-        <!-- Static mode toggle -->
-        <div class="static-toggle" id="staticToggle" onclick="toggleStatic()">
-          <div class="toggle-switch"></div>
-          <div class="toggle-label" id="staticLabel">Moving mode</div>
+        <div class="sec">Positions</div>
+        <div class="pos-card">
+          <div><div class="pos-lbl">Gun</div><div class="pos-val" id="gunCoord">Click map to set</div></div>
+          <button class="btn-sm danger" onclick="resetGun()" style="font-size:8px;">Reset</button>
         </div>
-        <div id="resetGunWrap" style="display:none;margin-bottom:8px;">
-          <button class="btn-sm warn-btn" onclick="resetGun()" style="width:100%;">&#x21BA; Reset gun position</button>
+        <div class="pos-card">
+          <div><div class="pos-lbl">Target</div><div class="pos-val" id="tgtCoord">—</div></div>
         </div>
-
-        <div class="sec">Gun position</div>
-        <div class="crow">
-          <div class="field"><label>Easting</label><input type="text" id="gx" placeholder="02181" maxlength="5" inputmode="numeric"></div>
-          <div class="field"><label>Northing</label><input type="text" id="gy" placeholder="00114" maxlength="5" inputmode="numeric"></div>
-          <button class="mpick" id="pgBtn" onclick="startPick('gun')" title="Pick on map">&#x25CE;</button>
+        <div class="row2" style="margin-bottom:7px;">
+          <div class="field"><label>Gun alt (m)</label><input type="number" id="galt" placeholder="0" inputmode="numeric"></div>
+          <div class="field"><label>Target alt (m)</label><input type="number" id="talt" placeholder="0" inputmode="numeric"></div>
         </div>
-        <div class="field"><label>Altitude (m)</label><input type="number" id="galt" placeholder="0" inputmode="numeric"></div>
-
-        <div class="sec">Target position</div>
-        <div class="crow">
-          <div class="field"><label>Easting</label><input type="text" id="tx" placeholder="04120" maxlength="5" inputmode="numeric"></div>
-          <div class="field"><label>Northing</label><input type="text" id="ty" placeholder="00656" maxlength="5" inputmode="numeric"></div>
-          <button class="mpick" id="ptBtn" onclick="startPick('tgt')" title="Pick on map">&#x25CE;</button>
-        </div>
-        <div class="field"><label>Altitude (m)</label><input type="number" id="talt" placeholder="0" inputmode="numeric"></div>
-
         <div class="sec">ACE Wind</div>
         <div class="row2">
-          <div class="field">
-            <label>Headwind (m/s)</label>
-            <input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal">
-            <div class="hint">+ to gun &nbsp;|&nbsp; − to tgt</div>
-          </div>
-          <div class="field">
-            <label>Crosswind (m/s)</label>
-            <input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal">
-            <div class="hint">+ from left &nbsp;|&nbsp; − right</div>
-          </div>
+          <div class="field"><label>Headwind (m/s)</label><input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ to gun | − to tgt</div></div>
+          <div class="field"><label>Crosswind (m/s)</label><input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ left | − right</div></div>
         </div>
-
-        <div id="chargeWrap">
-          <div class="sec">Charge</div>
-          <div class="field"><select id="csel"></select></div>
-        </div>
-
-        <div class="field" style="margin-top:6px;">
-          <label>Mission label (optional)</label>
-          <input type="text" id="mlabel" placeholder="e.g. T1 — armour treeline">
-        </div>
-
-        <button class="btn-calc" onclick="calc()">&#x25B6; Calculate</button>
+        <div class="sec">Charge</div>
+        <div class="field"><select id="csel"></select></div>
+        <div class="field" style="margin-top:6px;"><label>Label (optional)</label><input type="text" id="mlabel" placeholder="e.g. T1 — armour treeline"></div>
+        <button class="btn-calc" onclick="calc()">▶ Calculate</button>
         <div id="err" class="note err" style="display:none;"></div>
-
         <div id="resWrap" style="display:none;margin-top:10px;">
           <div class="sec">Results</div>
           <div class="rgrid" id="rgrid"></div>
@@ -318,508 +161,238 @@ header{
           <div id="altNote" class="note" style="display:none;"></div>
           <div id="windNote" class="note" style="display:none;"></div>
           <div id="warnNote" class="note warn" style="display:none;"></div>
-          <div style="text-align:right;margin-top:6px;">
-            <button class="btn-sm" onclick="logMission()">+ Log</button>
-          </div>
+          <div style="text-align:right;margin-top:6px;"><button class="btn-sm" onclick="logMission()">+ Log</button></div>
         </div>
-
       </div>
-
-      <!-- LOG TAB -->
       <div class="tab" id="t-log">
-        <div class="lctrl">
-          <div class="sec" style="margin:0;">Missions</div>
-          <button class="btn-sm danger" onclick="clearLog()">Clear all</button>
-        </div>
+        <div class="lctrl"><div class="sec" style="margin:0;">Missions</div><button class="btn-sm danger" onclick="clearLog()">Clear all</button></div>
         <div id="logList"><div class="lempty">NO MISSIONS LOGGED</div></div>
       </div>
-
     </div>
   </div>
 </div>
-
+</div>
 <script>
-// ============================================================
-// MAP CONSTANTS — SH Orlivka
-// ============================================================
-const MAP_W = 7130;   // map width in metres
-const MAP_H = 9150;   // map height in metres
-const LOD_MIN = 0;    // min zoom (most zoomed out)
-const LOD_MAX = 5;    // max zoom (most zoomed in)
-const TILE_URL = 'LODS/{z}/{x}/{y}/tile.jpg';
+const MAP_W=7130,MAP_H=9150,MAX_ZOOM=5,MIN_ZOOM=0;
+const MILS_DEG=6400/360;
 
-// Leaflet uses lat/lng internally. We map game coords (metres) to
-// a simple CRS where 1 unit = 1 metre, origin at bottom-left.
-// We use Leaflet's Simple CRS: x = easting, y = northing (inverted for screen)
+// Leaflet CRS.Simple: pixel coords = game coords scaled to [0,100]
+function g2ll(gx,gy){return L.latLng((gy/MAP_H)*100,(gx/MAP_W)*100);}
+function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/100)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/100)*MAP_H))};}
+function fmt(gx,gy){return String(gx).padStart(5,‘0’)+’ ’+String(gy).padStart(5,‘0’);}
 
-const MILS_DEG = 6400 / 360;
+const bounds=L.latLngBounds(L.latLng(0,0),L.latLng(100,100));
+const map=L.map(‘map’,{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSnap:0.5,zoomDelta:0.5,maxBounds:bounds,maxBoundsViscosity:0.8,attributionControl:false});
 
-// ============================================================
-// LEAFLET MAP SETUP
-// ============================================================
-// Custom CRS that maps game metres directly to pixel coords
-const GameCRS = L.extend({}, L.CRS.Simple, {
-  // scale: at zoom 0, the whole map fits in one tile grid
-  // LOD 0 has ~71 tiles wide, each tile is 256px standard
-  // We'll let Leaflet handle scaling
+// Custom tile layer — LOD 0=highest detail, LOD 5=lowest
+// Leaflet zoom 0=out, zoom 5=in — we invert
+L.TileLayer.Orlivka=L.TileLayer.extend({
+getTileUrl:function(c){
+const lod=MAX_ZOOM-c.z;
+return`Orlivka/LODS/${lod}/${c.x}/${c.y}/tile.jpg`;
+}
+});
+new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,bounds:bounds,
+errorTileUrl:‘data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7’}).addTo(map);
+map.fitBounds(bounds);
+
+const mkIcon=(col,lbl)=>L.divIcon({className:’’,iconSize:[28,28],iconAnchor:[14,14],html:
+`<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg"> <circle cx="14" cy="14" r="11" fill="${col}22" stroke="${col}" stroke-width="2"/> <line x1="14" y1="1" x2="14" y2="9" stroke="${col}" stroke-width="1.5"/> <line x1="14" y1="19" x2="14" y2="27" stroke="${col}" stroke-width="1.5"/> <line x1="1" y1="14" x2="9" y2="14" stroke="${col}" stroke-width="1.5"/> <line x1="19" y1="14" x2="27" y2="14" stroke="${col}" stroke-width="1.5"/> <text x="14" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="${col}" font-family="Courier New">${lbl}</text> </svg>`});
+
+const GUN_ICON=mkIcon(’#7eb34a’,‘G’),TGT_ICON=mkIcon(’#e05040’,‘T’);
+let gMkr=null,tMkr=null,line=null;
+
+function setG(gx,gy){
+const ll=g2ll(gx,gy);
+if(gMkr)gMkr.setLatLng(ll);
+else gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000}).addTo(map);
+document.getElementById(‘gunCoord’).textContent=fmt(gx,gy);
+drawLine();
+}
+function setT(gx,gy){
+const ll=g2ll(gx,gy);
+if(tMkr)tMkr.setLatLng(ll);
+else tMkr=L.marker(ll,{icon:TGT_ICON,zIndexOffset:999}).addTo(map);
+document.getElementById(‘tgtCoord’).textContent=fmt(gx,gy);
+drawLine();
+}
+function drawLine(){
+if(!gMkr||!tMkr)return;
+const pts=[gMkr.getLatLng(),tMkr.getLatLng()];
+if(line)line.setLatLngs(pts);
+else line=L.polyline(pts,{color:‘rgba(255,210,0,0.55)’,weight:1.5,dashArray:‘6,4’}).addTo(map);
+}
+function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById(‘gunCoord’).textContent=‘Click map to set’;}
+function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById(‘tgtCoord’).textContent=’—’;}
+
+let staticMode=false,gunLocked=false,nextClick=‘gun’;
+
+function toggleMode(){
+staticMode=!staticMode;
+const b=document.getElementById(‘modeBadge’);
+if(staticMode){b.textContent=‘⬛ STATIC’;b.classList.add(‘son’);if(gMkr){gunLocked=true;nextClick=‘target’;}else{gunLocked=false;nextClick=‘gun’;}}
+else{b.textContent=‘□ MOVING’;b.classList.remove(‘son’);gunLocked=false;nextClick=gMkr?‘target’:‘gun’;}
+updateBanner();
+}
+function resetGun(){clearG();clearT();gunLocked=false;nextClick=‘gun’;updateBanner();document.getElementById(‘resWrap’).style.display=‘none’;}
+function updateBanner(){document.getElementById(‘clickBanner’).textContent=nextClick===‘gun’?‘▶ CLICK — GUN POSITION’:‘▶ CLICK — TARGET POSITION’;}
+
+map.on(‘click’,function(e){
+const gp=ll2g(e.latlng);
+if(nextClick===‘gun’){setG(gp.x,gp.y);nextClick=‘target’;if(staticMode)gunLocked=true;}
+else{setT(gp.x,gp.y);if(!staticMode)nextClick=‘gun’;}
+updateBanner();
+});
+map.on(‘mousemove’,function(e){
+const gp=ll2g(e.latlng);
+document.getElementById(‘hud’).textContent=String(Math.max(0,gp.x)).padStart(5,‘0’)+’  ’+String(Math.max(0,gp.y)).padStart(5,‘0’);
 });
 
-// Convert game coords [easting, northing] to Leaflet LatLng
-// In Leaflet Simple CRS: lat = y (northing), lng = x (easting)
-function gameToLatLng(easting, northing) {
-  return L.latLng(northing, easting);
-}
-
-function latLngToGame(latlng) {
-  return { x: Math.round(latlng.lng), y: Math.round(latlng.lat) };
-}
-
-// Build map bounds in Leaflet coords
-const mapBounds = L.latLngBounds(
-  L.latLng(0, 0),           // SW corner
-  L.latLng(MAP_H, MAP_W)    // NE corner
-);
-
-const map = L.map('map', {
-  crs: L.CRS.Simple,
-  minZoom: LOD_MIN,
-  maxZoom: LOD_MAX,
-  zoomSnap: 0.5,
-  zoomDelta: 0.5,
-  attributionControl: false,
-  zoomControl: true,
-});
-
-// Tile layer — note: in Simple CRS, z = zoom, x = column, y = row
-// The tile tool uses {z}/{x}/{y} where z=LOD, x=col, y=row
-L.tileLayer(TILE_URL, {
-  minZoom: LOD_MIN,
-  maxZoom: LOD_MAX,
-  bounds: mapBounds,
-  noWrap: true,
-  tileSize: 256,
-  errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-}).addTo(map);
-
-// Fit map to bounds on load
-map.fitBounds(mapBounds);
-
-// Coordinate HUD on mouse move
-map.on('mousemove', function(e) {
-  const g = latLngToGame(e.latlng);
-  const xs = String(Math.max(0, Math.min(99999, g.x))).padStart(5,'0');
-  const ys = String(Math.max(0, Math.min(99999, g.y))).padStart(5,'0');
-  document.getElementById('hud').textContent = xs + '  ' + ys;
-});
-
-// ============================================================
-// MARKERS
-// ============================================================
-function makeIcon(color, label) {
-  return L.divIcon({
-    className: '',
-    html: `<svg width="28" height="28" viewBox="-14 -14 28 28" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="0" cy="0" r="9" fill="${color}33" stroke="${color}" stroke-width="2"/>
-      <line x1="-14" y1="0" x2="-11" y2="0" stroke="${color}" stroke-width="1.5"/>
-      <line x1="11" y1="0" x2="14" y2="0" stroke="${color}" stroke-width="1.5"/>
-      <line x1="0" y1="-14" x2="0" y2="-11" stroke="${color}" stroke-width="1.5"/>
-      <line x1="0" y1="11" x2="0" y2="14" stroke="${color}" stroke-width="1.5"/>
-      <text x="0" y="4" text-anchor="middle" font-family="Courier New" font-size="9" font-weight="bold" fill="${color}">${label}</text>
-    </svg>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-}
-
-let gunMarker = null, tgtMarker = null, fireLine = null;
-
-function setGunMarker(gx, gy) {
-  if (gunMarker) map.removeLayer(gunMarker);
-  gunMarker = L.marker(gameToLatLng(gx, gy), {
-    icon: makeIcon('#7eb34a', 'G'),
-    zIndexOffset: 100
-  }).bindTooltip(`G: ${String(gx).padStart(5,'0')} ${String(gy).padStart(5,'0')}`, {
-    permanent: false, direction: 'top', className: 'leaflet-tooltip'
-  }).addTo(map);
-}
-
-function setTgtMarker(gx, gy) {
-  if (tgtMarker) map.removeLayer(tgtMarker);
-  tgtMarker = L.marker(gameToLatLng(gx, gy), {
-    icon: makeIcon('#e05040', 'T'),
-    zIndexOffset: 100
-  }).bindTooltip(`T: ${String(gx).padStart(5,'0')} ${String(gy).padStart(5,'0')}`, {
-    permanent: false, direction: 'top', className: 'leaflet-tooltip'
-  }).addTo(map);
-  drawLine();
-}
-
-function drawLine() {
-  if (fireLine) map.removeLayer(fireLine);
-  if (!gunMarker || !tgtMarker) return;
-  const gp = latLngToGame(gunMarker.getLatLng());
-  const tp = latLngToGame(tgtMarker.getLatLng());
-  fireLine = L.polyline([gameToLatLng(gp.x, gp.y), gameToLatLng(tp.x, tp.y)], {
-    color: 'rgba(255,210,0,0.6)', weight: 1.5, dashArray: '6,4'
-  }).addTo(map);
-}
-
-// ============================================================
-// CLICK MODES
-// ============================================================
-let clickMode = null;      // 'gun' | 'tgt' | null (manual pick mode)
-let staticMode = false;    // static gun position mode
-let gunLocked = false;     // gun locked in static mode
-let clickState = 'gun';    // 'gun' | 'tgt' — for normal alternating clicks
-
-function updateBanner() {
-  const banner = document.getElementById('modeBanner');
-  const badge = document.getElementById('modeBadge');
-
-  if (clickMode === 'gun') {
-    banner.textContent = '▶ CLICK MAP — GUN POSITION';
-  } else if (clickMode === 'tgt') {
-    banner.textContent = '▶ CLICK MAP — TARGET POSITION';
-  } else if (staticMode && !gunLocked) {
-    banner.textContent = '▶ CLICK MAP — SET GUN (STATIC)';
-  } else if (staticMode && gunLocked) {
-    banner.textContent = '▶ NEXT CLICK: TARGET POSITION';
-  } else {
-    banner.textContent = clickState === 'gun' ? '▶ NEXT CLICK: GUN POSITION' : '▶ NEXT CLICK: TARGET POSITION';
-  }
-
-  if (staticMode) {
-    badge.textContent = gunLocked ? 'STATIC — GUN LOCKED' : 'STATIC MODE';
-    badge.className = 'mode-badge static-on';
-  } else {
-    badge.textContent = 'MOVING MODE';
-    badge.className = 'mode-badge';
-  }
-}
-
-function startPick(type) {
-  clickMode = type;
-  document.getElementById('pgBtn').classList.toggle('on', type === 'gun');
-  document.getElementById('ptBtn').classList.toggle('on', type === 'tgt');
-  updateBanner();
-  map.getContainer().style.cursor = 'crosshair';
-}
-
-function toggleStatic() {
-  staticMode = !staticMode;
-  const tog = document.getElementById('staticToggle');
-  const lbl = document.getElementById('staticLabel');
-  tog.classList.toggle('on', staticMode);
-  lbl.textContent = staticMode ? 'Static mode' : 'Moving mode';
-  if (!staticMode) {
-    gunLocked = false;
-    clickState = 'gun';
-    document.getElementById('resetGunWrap').style.display = 'none';
-  }
-  updateBanner();
-}
-
-function resetGun() {
-  gunLocked = false;
-  clickState = 'gun';
-  if (gunMarker) { map.removeLayer(gunMarker); gunMarker = null; }
-  if (fireLine) { map.removeLayer(fireLine); fireLine = null; }
-  document.getElementById('gx').value = '';
-  document.getElementById('gy').value = '';
-  document.getElementById('resetGunWrap').style.display = 'none';
-  updateBanner();
-}
-
-// Main map click handler
-map.on('click', function(e) {
-  const g = latLngToGame(e.latlng);
-  const gx = Math.max(0, Math.min(99999, g.x));
-  const gy = Math.max(0, Math.min(99999, g.y));
-  const xs = String(gx).padStart(5,'0');
-  const ys = String(gy).padStart(5,'0');
-
-  // Manual pick mode (from ◎ buttons)
-  if (clickMode) {
-    if (clickMode === 'gun') {
-      setGunMarker(gx, gy);
-      document.getElementById('gx').value = xs;
-      document.getElementById('gy').value = ys;
-      document.getElementById('pgBtn').classList.remove('on');
-    } else {
-      setTgtMarker(gx, gy);
-      document.getElementById('tx').value = xs;
-      document.getElementById('ty').value = ys;
-      document.getElementById('ptBtn').classList.remove('on');
-    }
-    clickMode = null;
-    map.getContainer().style.cursor = '';
-    updateBanner();
-    return;
-  }
-
-  // Static mode
-  if (staticMode) {
-    if (!gunLocked) {
-      setGunMarker(gx, gy);
-      document.getElementById('gx').value = xs;
-      document.getElementById('gy').value = ys;
-      gunLocked = true;
-      document.getElementById('resetGunWrap').style.display = 'block';
-    } else {
-      setTgtMarker(gx, gy);
-      document.getElementById('tx').value = xs;
-      document.getElementById('ty').value = ys;
-    }
-    updateBanner();
-    return;
-  }
-
-  // Moving mode — alternate gun/target
-  if (clickState === 'gun') {
-    setGunMarker(gx, gy);
-    document.getElementById('gx').value = xs;
-    document.getElementById('gy').value = ys;
-    clickState = 'tgt';
-  } else {
-    setTgtMarker(gx, gy);
-    document.getElementById('tx').value = xs;
-    document.getElementById('ty').value = ys;
-    clickState = 'gun';
-  }
-  updateBanner();
-});
-
-// ============================================================
-// BALLISTIC DATA
-// ============================================================
-const M777C = [
-  {name:"Charge 1",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[[950,1245,24.4,24],[1000,1221,24.2,24],[1050,1197,24.0,26],[1100,1171,23.7,27],[1150,1144,23.4,29],[1200,1115,23.1,31],[1250,1084,22.7,34],[1300,1050,22.3,39],[1350,1011,21.8,46],[1400,965,21.2,58],[1450,907,20.3,107],[1500,800,18.6,null]]},
-  {name:"Charge 2",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[[1500,1270,33.1,13],[1550,1257,33.0,14],[1600,1243,32.9,14],[1650,1229,32.7,15],[1700,1214,32.5,14],[1750,1200,32.4,15],[1800,1185,32.1,16],[1850,1169,31.9,16],[1900,1153,31.7,17],[1950,1136,31.5,17],[2000,1119,31.2,18],[2050,1101,31.0,19],[2100,1082,30.7,20],[2150,1062,30.3,21],[2200,1041,30.0,23],[2250,1018,29.6,23],[2300,995,29.2,28],[2350,967,28.7,29],[2400,938,28.1,34],[2450,904,27.5,44],[2500,860,26.5,null]]},
-  {name:"Charge 3",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[[2100,1272,41.0,10],[2200,1253,40.8,10],[2300,1233,40.5,10],[2400,1213,40.2,11],[2500,1192,39.9,11],[2600,1170,39.5,12],[2700,1147,39.1,12],[2800,1123,38.7,13],[2900,1098,38.3,14],[3000,1070,37.7,14],[3100,1042,37.2,16],[3200,1010,36.5,16],[3300,975,35.7,18],[3400,936,34.9,22],[3500,890,33.7,28],[3600,828,32.1,null]]},
-  {name:"Charge 4",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[[2600,1271,47.2,8],[2700,1255,47.0,7],[2800,1240,46.7,8],[2900,1224,46.5,9],[3000,1207,46.2,9],[3100,1190,45.9,9],[3200,1172,45.6,9],[3300,1154,45.2,9],[3400,1135,44.9,9],[3500,1116,44.5,10],[3600,1095,44.0,10],[3700,1074,43.6,11],[3800,1052,43.1,12],[3900,1028,42.5,12],[4000,1003,41.9,14],[4100,976,41.3,15],[4200,946,40.5,17],[4300,912,39.6,17],[4400,874,38.5,20],[4500,828,37.2,26]]},
-  {name:"Charge 5",col:"#854F0B",bg:"rgba(133,79,11,0.3)",t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
+// BALLISTICS
+const M777C=[
+{name:“Charge 1”,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”,t:[[950,1245,24.4,24],[1000,1221,24.2,24],[1050,1197,24.0,26],[1100,1171,23.7,27],[1150,1144,23.4,29],[1200,1115,23.1,31],[1250,1084,22.7,34],[1300,1050,22.3,39],[1350,1011,21.8,46],[1400,965,21.2,58],[1450,907,20.3,107],[1500,800,18.6,null]]},
+{name:“Charge 2”,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”,t:[[1500,1270,33.1,13],[1550,1257,33.0,14],[1600,1243,32.9,14],[1650,1229,32.7,15],[1700,1214,32.5,14],[1750,1200,32.4,15],[1800,1185,32.1,16],[1850,1169,31.9,16],[1900,1153,31.7,17],[1950,1136,31.5,17],[2000,1119,31.2,18],[2050,1101,31.0,19],[2100,1082,30.7,20],[2150,1062,30.3,21],[2200,1041,30.0,23],[2250,1018,29.6,23],[2300,995,29.2,28],[2350,967,28.7,29],[2400,938,28.1,34],[2450,904,27.5,44],[2500,860,26.5,null]]},
+{name:“Charge 3”,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”,t:[[2100,1272,41.0,10],[2200,1253,40.8,10],[2300,1233,40.5,10],[2400,1213,40.2,11],[2500,1192,39.9,11],[2600,1170,39.5,12],[2700,1147,39.1,12],[2800,1123,38.7,13],[2900,1098,38.3,14],[3000,1070,37.7,14],[3100,1042,37.2,16],[3200,1010,36.5,16],[3300,975,35.7,18],[3400,936,34.9,22],[3500,890,33.7,28],[3600,828,32.1,null]]},
+{name:“Charge 4”,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”,t:[[2600,1271,47.2,8],[2700,1255,47.0,7],[2800,1240,46.7,8],[2900,1224,46.5,9],[3000,1207,46.2,9],[3100,1190,45.9,9],[3200,1172,45.6,9],[3300,1154,45.2,9],[3400,1135,44.9,9],[3500,1116,44.5,10],[3600,1095,44.0,10],[3700,1074,43.6,11],[3800,1052,43.1,12],[3900,1028,42.5,12],[4000,1003,41.9,14],[4100,976,41.3,15],[4200,946,40.5,17],[4300,912,39.6,17],[4400,874,38.5,20],[4500,828,37.2,26]]},
+{name:“Charge 5”,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”,t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
 ];
-
-const MORT = {
-  m252:{label:"M252 (81mm)",wd:1.4,wr:1.8,c:[{n:"Charge 0",mn:73,mx:490,mv:69,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:200,mx:900,mv:109,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:400,mx:1500,mv:147,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:700,mx:2100,mv:185,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1000,mx:3000,mv:225,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1500,mx:4000,mv:273,col:"#A32D2D",bg:"rgba(163,45,45,0.3)"},{n:"Charge 6",mn:2000,mx:5608,mv:320,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
-  m224:{label:"M224 (60mm)",wd:1.8,wr:2.2,c:[{n:"Charge 0",mn:40,mx:330,mv:55,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:100,mx:600,mv:89,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:200,mx:900,mv:120,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:400,mx:1200,mv:150,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:700,mx:1800,mv:185,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1000,mx:2490,mv:218,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
-  "2b14":{label:"2B14 (82mm)",wd:1.5,wr:1.9,c:[{n:"Charge 0",mn:80,mx:520,mv:72,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:250,mx:950,mv:115,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:450,mx:1600,mv:155,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:750,mx:2200,mv:196,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1100,mx:3000,mv:238,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1600,mx:4270,mv:282,col:"#555550",bg:"rgba(85,85,80,0.3)"}]}
+const MORT={
+m252:{label:“M252 (81mm)”,wd:1.4,wr:1.8,c:[{n:“Charge 0”,mn:73,mx:490,mv:69,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:200,mx:900,mv:109,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:400,mx:1500,mv:147,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:700,mx:2100,mv:185,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:1000,mx:3000,mv:225,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1500,mx:4000,mv:273,col:”#A32D2D”,bg:“rgba(163,45,45,0.3)”},{n:“Charge 6”,mn:2000,mx:5608,mv:320,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]},
+m224:{label:“M224 (60mm)”,wd:1.8,wr:2.2,c:[{n:“Charge 0”,mn:40,mx:330,mv:55,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:100,mx:600,mv:89,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:200,mx:900,mv:120,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:400,mx:1200,mv:150,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:700,mx:1800,mv:185,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1000,mx:2490,mv:218,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]},
+“2b14”:{label:“2B14 (82mm)”,wd:1.5,wr:1.9,c:[{n:“Charge 0”,mn:80,mx:520,mv:72,col:”#3B6D11”,bg:“rgba(59,109,17,0.3)”},{n:“Charge 1”,mn:250,mx:950,mv:115,col:”#185FA5”,bg:“rgba(24,95,165,0.3)”},{n:“Charge 2”,mn:450,mx:1600,mv:155,col:”#993C1D”,bg:“rgba(153,60,29,0.3)”},{n:“Charge 3”,mn:750,mx:2200,mv:196,col:”#534AB7”,bg:“rgba(83,74,183,0.3)”},{n:“Charge 4”,mn:1100,mx:3000,mv:238,col:”#854F0B”,bg:“rgba(133,79,11,0.3)”},{n:“Charge 5”,mn:1600,mx:4270,mv:282,col:”#555550”,bg:“rgba(85,85,80,0.3)”}]}
 };
 
-// ============================================================
-// BALLISTIC CALCULATIONS
-// ============================================================
-let aw="m777", lastRes=null, mlog=[], mcnt=1;
+let aw=“m777”,lastRes=null,mlog=[],mcnt=1;
 
 function interp(tbl,dist){
-  if(dist<=tbl[0][0])return[...tbl[0]];
-  if(dist>=tbl[tbl.length-1][0])return[...tbl[tbl.length-1]];
-  for(let i=0;i<tbl.length-1;i++){
-    const a=tbl[i],b=tbl[i+1];
-    if(dist>=a[0]&&dist<=b[0]){
-      const t=(dist-a[0])/(b[0]-a[0]);
-      return[dist,Math.round(a[1]+(b[1]-a[1])*t),
-        parseFloat((a[2]+(b[2]-a[2])*t).toFixed(1)),
-        (a[3]!=null&&b[3]!=null)?parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)):null];
-    }
-  }
-  return[...tbl[tbl.length-1]];
+if(dist<=tbl[0][0])return[…tbl[0]];
+if(dist>=tbl[tbl.length-1][0])return[…tbl[tbl.length-1]];
+for(let i=0;i<tbl.length-1;i++){
+const a=tbl[i],b=tbl[i+1];
+if(dist>=a[0]&&dist<=b[0]){
+const t=(dist-a[0])/(b[0]-a[0]);
+return[dist,Math.round(a[1]+(b[1]-a[1])*t),parseFloat((a[2]+(b[2]-a[2])*t).toFixed(1)),(a[3]!=null&&b[3]!=null)?parseFloat((a[3]+(b[3]-a[3])*t).toFixed(1)):null];
 }
-
-function bestM777(dist){
-  for(const c of M777C){const mn=c.t[0][0],mx=c.t[c.t.length-1][0];if(dist>=mn&&dist<=mx)return c;}
-  return null;
 }
-
-function mortarElev(dist,altDiff,mv){
-  const g=9.81,vSq=mv*mv;
-  const disc=vSq*vSq-g*(g*dist*dist+2*altDiff*vSq);
-  if(disc<0)return null;
-  return Math.round(Math.atan((vSq-Math.sqrt(disc))/(g*dist))*(180/Math.PI)*MILS_DEG);
+return[…tbl[tbl.length-1]];
 }
-
-function pg(id){const s=document.getElementById(id).value.trim();return/^\d{5}$/.test(s)?parseInt(s,10):null;}
+function bestM777(d){for(const c of M777C){if(d>=c.t[0][0]&&d<=c.t[c.t.length-1][0])return c;}return null;}
+function mortElev(d,h,mv){const g=9.81,v2=mv*mv,disc=v2*v2-g*(g*d*d+2*h*v2);if(disc<0)return null;return Math.round(Math.atan((v2-Math.sqrt(disc))/(g*d))*(180/Math.PI)*MILS_DEG);}
 function gv(id){return parseFloat(document.getElementById(id).value);}
 
 function calc(){
-  const err=document.getElementById('err'),res=document.getElementById('resWrap');
-  err.style.display='none';res.style.display='none';lastRes=null;
-  const gx=pg('gx'),gy=pg('gy'),tx=pg('tx'),ty=pg('ty');
-  const galt=gv('galt'),talt=gv('talt');
-  const hw=isNaN(gv('hw'))?0:gv('hw'),cw=isNaN(gv('cw'))?0:gv('cw');
-  if(gx===null||gy===null||tx===null||ty===null){err.textContent='Grid coords must be exactly 5 digits.';err.style.display='block';return;}
-  if(isNaN(galt)||isNaN(talt)){err.textContent='Altitude fields are required.';err.style.display='block';return;}
+const err=document.getElementById(‘err’),res=document.getElementById(‘resWrap’);
+err.style.display=‘none’;res.style.display=‘none’;lastRes=null;
+if(!gMkr){err.textContent=‘Set gun position on map first.’;err.style.display=‘block’;return;}
+if(!tMkr){err.textContent=‘Set target position on map first.’;err.style.display=‘block’;return;}
+const gun=ll2g(gMkr.getLatLng()),tgt=ll2g(tMkr.getLatLng());
+const galt=isNaN(gv(‘galt’))?0:gv(‘galt’),talt=isNaN(gv(‘talt’))?0:gv(‘talt’);
+const hw=isNaN(gv(‘hw’))?0:gv(‘hw’),cw=isNaN(gv(‘cw’))?0:gv(‘cw’);
+const dx=tgt.x-gun.x,dy=tgt.y-gun.y,dist=Math.sqrt(dx*dx+dy*dy),altDiff=talt-galt;
+let bear=Math.atan2(dx,dy)*(180/Math.PI);if(bear<0)bear+=360;
+[‘warnNote’,‘windNote’,‘altNote’].forEach(id=>document.getElementById(id).style.display=‘none’);
+document.getElementById(‘crRow’).style.display=‘none’;
+const rg=document.getElementById(‘rgrid’);rg.innerHTML=’’;
+const addR=(l,v,u,w=false)=>{rg.innerHTML+=`<div class="rcard${w?' wide':''}"><div class="rlbl">${l}</div><div class="rval">${v}</div><div class="runit">${u}</div></div>`;};
+addR(‘Distance’,Math.round(dist).toLocaleString(),‘meters’);
+addR(‘Bearing’,bear.toFixed(1)+‘°’,‘degrees true’);
+const csv=document.getElementById(‘csel’).value;
+const wlbl=aw===‘m777’?‘M777 (155mm)’:MORT[aw].label;
+let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById(‘mlabel’).value.trim(),hw,cw,
+gunC:fmt(gun.x,gun.y),tgtC:fmt(tgt.x,tgt.y)};
 
-  // Update markers from typed values too
-  setGunMarker(gx,gy);setTgtMarker(tx,ty);
-
-  const dx=tx-gx,dy=ty-gy,dist=Math.sqrt(dx*dx+dy*dy),altDiff=talt-galt;
-  let bear=Math.atan2(dx,dy)*(180/Math.PI);if(bear<0)bear+=360;
-
-  ['warnNote','windNote','altNote'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('crRow').style.display='none';
-  const rg=document.getElementById('rgrid');rg.innerHTML='';
-
-  function addR(l,v,u,wide=false){
-    rg.innerHTML+=`<div class="rcard${wide?' wide':''}"><div class="rlbl">${l}</div><div class="rval">${v}</div><div class="runit">${u}</div></div>`;
-  }
-
-  addR('Distance',Math.round(dist).toLocaleString(),'meters');
-  addR('Bearing',bear.toFixed(1)+'°','degrees true');
-
-  const csv=document.getElementById('csel').value;
-  const wlbl=aw==='m777'?'M777 (155mm)':MORT[aw].label;
-  let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById('mlabel').value.trim(),hw,cw};
-
-  if(aw==='m777'){
-    let ch=csv==='auto'?bestM777(dist):M777C[parseInt(csv)];
-    if(!ch){
-      document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all M777 ranges (950–5300m).`;
-      document.getElementById('warnNote').style.display='block';
-      addR('Deflection','—','mils');addR('Elevation','—','mils');
-      result.defl=null;result.elev=null;result.charge=null;result.tof=null;
-    } else {
-      const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
-      if(dist<mn||dist>mx){document.getElementById('warnNote').textContent=`${ch.name} range ${mn}–${mx}m. Distance ${Math.round(dist)}m.`;document.getElementById('warnNote').style.display='block';}
-      const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
-      let ac=0;
-      if(dE!==null&&Math.abs(altDiff)>1){
-        ac=Math.round((altDiff/100)*dE);elev-=ac;
-        document.getElementById('altNote').textContent=`Alt: ${altDiff>0?'+':''}${altDiff}m → ${ac>0?'−':'+'}${Math.abs(ac)} mils`;
-        document.getElementById('altNote').style.display='block';
-      }
-      const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
-      const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
-      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea,'mils');addR('TOF',tof.toFixed(1)+'s','from table');
-      document.getElementById('crRow').style.display='block';
-      const bd=document.getElementById('crBadge');bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
-      document.getElementById('crRange').textContent=`(${mn}–${mx}m)`;
-      const wp=[];
-      if(Math.abs(hw)>0.05)wp.push(`HW→elev${rc>0?'+':''}${rc}`);
-      if(Math.abs(cw)>0.05)wp.push(`CW→defl${dc>0?'+':''}${dc}`);
-      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' mils (included)';document.getElementById('windNote').style.display='block';}
-      result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+'s';
-    }
-  } else {
-    const m=MORT[aw];
-    let ch=csv==='auto'?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
-    if(!ch){
-      document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all charge ranges.`;
-      document.getElementById('warnNote').style.display='block';
-      addR('Deflection','—','mils');addR('Elevation','—','mils');
-      result.defl=null;result.elev=null;result.charge=null;result.tof=null;
-    } else {
-      if(dist<ch.mn||dist>ch.mx){document.getElementById('warnNote').textContent=`${ch.n} range ${ch.mn}–${ch.mx}m.`;document.getElementById('warnNote').style.display='block';}
-      const tof=dist/ch.mv;
-      const rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3);
-      const dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
-      let elev=mortarElev(dist,altDiff,ch.mv);
-      if(elev===null||elev<0||elev>1422){
-        document.getElementById('warnNote').textContent=(document.getElementById('warnNote').style.display==='block'?document.getElementById('warnNote').textContent+' ':'')+'Elev OOB — try different charge.';
-        document.getElementById('warnNote').style.display='block';elev=null;
-      }
-      const ea=elev!==null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
-      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea!==null?ea:'—','mils');addR('TOF',Math.round(tof)+'s','approx.');
-      document.getElementById('crRow').style.display='block';
-      const bd=document.getElementById('crBadge');bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
-      document.getElementById('crRange').textContent=`(${ch.mn}–${ch.mx}m)`;
-      const wp=[];
-      if(Math.abs(hw)>0.05)wp.push(`HW→elev${rc>0?'+':''}${rc}`);
-      if(Math.abs(cw)>0.05)wp.push(`CW→defl${dc>0?'+':''}${dc}`);
-      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' mils (included)';document.getElementById('windNote').style.display='block';}
-      result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+'s';
-    }
-  }
-
-  lastRes=result;res.style.display='block';
+if(aw===‘m777’){
+let ch=csv===‘auto’?bestM777(dist):M777C[parseInt(csv)];
+if(!ch){document.getElementById(‘warnNote’).textContent=`${Math.round(dist)}m outside all M777 ranges.`;document.getElementById(‘warnNote’).style.display=‘block’;addR(‘Deflection’,’—’,‘mils’);addR(‘Elevation’,’—’,‘mils’);result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+else{
+const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
+if(dist<mn||dist>mx){document.getElementById(‘warnNote’).textContent=`${ch.name}: ${mn}–${mx}m. Got ${Math.round(dist)}m.`;document.getElementById(‘warnNote’).style.display=‘block’;}
+const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
+let ac=0;if(dE!=null&&Math.abs(altDiff)>1){ac=Math.round((altDiff/100)*dE);elev-=ac;document.getElementById(‘altNote’).textContent=`Alt: ${altDiff>0?'+':''}${altDiff}m → ${ac>0?'−':'+'}${Math.abs(ac)} mils`;document.getElementById(‘altNote’).style.display=‘block’;}
+const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
+const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+addR(‘Deflection’,da,‘mils (NATO 6400)’);addR(‘Elevation’,ea,‘mils’);addR(‘TOF’,tof.toFixed(1)+‘s’,‘from table’);
+document.getElementById(‘crRow’).style.display=‘block’;
+const bd=document.getElementById(‘crBadge’);bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
+document.getElementById(‘crRange’).textContent=`(${mn}–${mx}m)`;
+const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
+if(wp.length){document.getElementById(‘windNote’).textContent=‘Wind: ‘+wp.join(’, ‘)+’ (included)’;document.getElementById(‘windNote’).style.display=‘block’;}
+result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+‘s’;
+}
+} else {
+const m=MORT[aw];
+let ch=csv===‘auto’?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
+if(!ch){document.getElementById(‘warnNote’).textContent=`${Math.round(dist)}m outside all charge ranges.`;document.getElementById(‘warnNote’).style.display=‘block’;addR(‘Deflection’,’—’,‘mils’);addR(‘Elevation’,’—’,‘mils’);result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+else{
+if(dist<ch.mn||dist>ch.mx){document.getElementById(‘warnNote’).textContent=`${ch.n}: ${ch.mn}–${ch.mx}m.`;document.getElementById(‘warnNote’).style.display=‘block’;}
+const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
+let elev=mortElev(dist,altDiff,ch.mv);
+if(elev==null||elev<0||elev>1422){document.getElementById(‘warnNote’).textContent=(document.getElementById(‘warnNote’).style.display===‘block’?document.getElementById(‘warnNote’).textContent+’ ‘:’’)+‘Elev OOB.’;document.getElementById(‘warnNote’).style.display=‘block’;elev=null;}
+const ea=elev!=null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+addR(‘Deflection’,da,‘mils (NATO 6400)’);addR(‘Elevation’,ea!=null?ea:’—’,‘mils’);addR(‘TOF’,Math.round(tof)+‘s’,‘approx.’);
+document.getElementById(‘crRow’).style.display=‘block’;
+const bd=document.getElementById(‘crBadge’);bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
+document.getElementById(‘crRange’).textContent=`(${ch.mn}–${ch.mx}m)`;
+const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
+if(wp.length){document.getElementById(‘windNote’).textContent=‘Wind: ‘+wp.join(’, ‘)+’ (included)’;document.getElementById(‘windNote’).style.display=‘block’;}
+result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+‘s’;
+}
+}
+lastRes=result;res.style.display=‘block’;
 }
 
-// ============================================================
-// MISSION LOG
-// ============================================================
 function logMission(){
-  if(!lastRes)return;
-  const id='M'+String(mcnt++).padStart(2,'0');
-  mlog.unshift({id,...lastRes,ts:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
-  renderLog();
-  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  document.querySelector('[data-t="log"]').classList.add('on');
-  document.getElementById('t-log').classList.add('on');
+if(!lastRes)return;
+const id=‘M’+String(mcnt++).padStart(2,‘0’);
+mlog.unshift({id,…lastRes,ts:new Date().toLocaleTimeString([],{hour:‘2-digit’,minute:‘2-digit’})});
+renderLog();
+document.querySelectorAll(’.stab’).forEach(t=>t.classList.remove(‘on’));
+document.querySelectorAll(’.tab’).forEach(t=>t.classList.remove(‘on’));
+document.querySelector(’[data-t=“log”]’).classList.add(‘on’);
+document.getElementById(‘t-log’).classList.add(‘on’);
 }
-
 function renderLog(){
-  const el=document.getElementById('logList');
-  if(!mlog.length){el.innerHTML='<div class="lempty">NO MISSIONS LOGGED</div>';return;}
-  el.innerHTML=mlog.map((m,i)=>{
-    const lbl=m.label?`<span class="llbl">${m.label}</span>`:'';
-    const vs=[];
-    vs.push(`<div class="lv"><span>Dist</span>${m.dist.toLocaleString()}m</div>`);
-    vs.push(`<div class="lv"><span>Brg</span>${m.bear.toFixed(1)}°</div>`);
-    if(m.defl!=null)vs.push(`<div class="lv"><span>Defl</span>${m.defl}</div>`);
-    if(m.elev!=null)vs.push(`<div class="lv"><span>Elev</span>${m.elev}</div>`);
-    if(m.charge)vs.push(`<div class="lv"><span>Chg</span>${m.charge}</div>`);
-    if(m.tof)vs.push(`<div class="lv"><span>TOF</span>${m.tof}</div>`);
-    if(Math.abs(m.hw||0)>0.05||Math.abs(m.cw||0)>0.05)
-      vs.push(`<div class="lv"><span>Wind</span>HW${(m.hw||0)>0?'+':''}${(m.hw||0).toFixed(1)} CW${(m.cw||0)>0?'+':''}${(m.cw||0).toFixed(1)}</div>`);
-    return`<div class="lentry">
-      <div class="lhdr">
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          <span class="lid">${m.id}</span><span class="lwep">${m.weapon}</span>${lbl}
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="ltime">${m.ts}</span>
-          <button class="btn-sm danger" onclick="delEntry(${i})">✕</button>
-        </div>
-      </div>
-      <div class="lvals">${vs.join('')}</div>
-    </div>`;
-  }).join('');
+const el=document.getElementById(‘logList’);
+if(!mlog.length){el.innerHTML=’<div class="lempty">NO MISSIONS LOGGED</div>’;return;}
+el.innerHTML=mlog.map((m,i)=>{
+const lbl=m.label?`<span class="llbl">${m.label}</span>`:’’;
+const vs=[];
+vs.push(`<div class="lv"><span>Gun</span>${m.gunC||'—'}</div>`);
+vs.push(`<div class="lv"><span>Tgt</span>${m.tgtC||'—'}</div>`);
+vs.push(`<div class="lv"><span>Dist</span>${m.dist.toLocaleString()}m</div>`);
+vs.push(`<div class="lv"><span>Brg</span>${m.bear.toFixed(1)}°</div>`);
+if(m.defl!=null)vs.push(`<div class="lv"><span>Defl</span>${m.defl}</div>`);
+if(m.elev!=null)vs.push(`<div class="lv"><span>Elev</span>${m.elev}</div>`);
+if(m.charge)vs.push(`<div class="lv"><span>Chg</span>${m.charge}</div>`);
+if(m.tof)vs.push(`<div class="lv"><span>TOF</span>${m.tof}</div>`);
+return`<div class="lentry"><div class="lhdr"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><span class="lid">${m.id}</span><span class="lwep">${m.weapon}</span>${lbl}</div><div style="display:flex;align-items:center;gap:6px;"><span class="ltime">${m.ts}</span><button class="btn-sm danger" onclick="delEntry(${i})">✕</button></div></div><div class="lvals">${vs.join('')}</div></div>`;
+}).join(’’);
 }
-
 function delEntry(i){mlog.splice(i,1);renderLog();}
 function clearLog(){mlog=[];mcnt=1;renderLog();}
 
-// ============================================================
-// CHARGE SELECT & WEAPON TABS
-// ============================================================
 function buildCS(){
-  const s=document.getElementById('csel');s.innerHTML='';
-  const a=document.createElement('option');a.value='auto';a.textContent='Auto (lowest valid charge)';s.appendChild(a);
-  if(aw==='m777'){
-    M777C.forEach((c,i)=>{
-      const o=document.createElement('option');o.value=i;
-      o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);
-    });
-  } else {
-    MORT[aw].c.forEach((c,i)=>{
-      const o=document.createElement('option');o.value=i;
-      o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);
-    });
-  }
+const s=document.getElementById(‘csel’);s.innerHTML=’’;
+const a=document.createElement(‘option’);a.value=‘auto’;a.textContent=‘Auto (lowest valid charge)’;s.appendChild(a);
+if(aw===‘m777’){M777C.forEach((c,i)=>{const o=document.createElement(‘option’);o.value=i;o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);});}
+else{MORT[aw].c.forEach((c,i)=>{const o=document.createElement(‘option’);o.value=i;o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);});}
 }
-
-document.getElementById('wtabs').addEventListener('click',e=>{
-  const t=e.target.closest('.wtab');if(!t)return;
-  document.querySelectorAll('.wtab').forEach(w=>w.classList.remove('on'));
-  t.classList.add('on');aw=t.dataset.w;buildCS();
-  document.getElementById('resWrap').style.display='none';
-  document.getElementById('err').style.display='none';lastRes=null;
+document.getElementById(‘wtabs’).addEventListener(‘click’,e=>{
+const t=e.target.closest(’.wtab’);if(!t)return;
+document.querySelectorAll(’.wtab’).forEach(w=>w.classList.remove(‘on’));
+t.classList.add(‘on’);aw=t.dataset.w;buildCS();
+document.getElementById(‘resWrap’).style.display=‘none’;document.getElementById(‘err’).style.display=‘none’;lastRes=null;
 });
-
-document.querySelectorAll('.stab').forEach(t=>{
-  t.addEventListener('click',()=>{
-    document.querySelectorAll('.stab').forEach(s=>s.classList.remove('on'));
-    document.querySelectorAll('.tab').forEach(p=>p.classList.remove('on'));
-    t.classList.add('on');document.getElementById('t-'+t.dataset.t).classList.add('on');
-  });
+document.querySelectorAll(’.stab’).forEach(t=>{
+t.addEventListener(‘click’,()=>{
+document.querySelectorAll(’.stab’).forEach(s=>s.classList.remove(‘on’));
+document.querySelectorAll(’.tab’).forEach(p=>p.classList.remove(‘on’));
+t.classList.add(‘on’);document.getElementById(‘t-’+t.dataset.t).classList.add(‘on’);
 });
-
-document.querySelectorAll('input').forEach(el=>el.addEventListener('keydown',e=>{if(e.key==='Enter')calc();}));
-
-// ── INIT ──
+});
+document.querySelectorAll(‘input’).forEach(el=>el.addEventListener(‘keydown’,e=>{if(e.key===‘Enter’)calc();}));
 buildCS();
-updateBanner();
 </script>
+
 </body>
 </html>
