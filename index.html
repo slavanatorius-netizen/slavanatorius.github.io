@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ACE Fire Mission Calculator — by Fentastic</title>
-<link rel="stylesheet" href="leaflet/leaflet.css"/>
-<script src="leaflet/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -188,10 +188,12 @@ const map=L.map('map',{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSn
 L.TileLayer.Orlivka=L.TileLayer.extend({
   getTileUrl:function(c){
     const lod=MAX_ZOOM-c.z;
-    return`Orlivka/LODS/${lod}/${c.x}/${c.y}/tile.jpg`;
+    const LOD_Y={0:95,1:48,2:25,3:12,4:7,5:4};
+    const flippedY=LOD_Y[lod]-1-c.y;
+    return`Orlivka/LODS/${lod}/${c.x}/${flippedY}/tile.jpg`;
   }
 });
-new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,tms:true,bounds:bounds,
+new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,bounds:bounds,
   errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}).addTo(map);
 map.fitBounds(bounds);
 
