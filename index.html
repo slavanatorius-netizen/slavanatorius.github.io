@@ -192,7 +192,7 @@ const lod=MAX_ZOOM-c.z;
 return`Orlivka/LODS/${lod}/${c.x}/${c.y}/tile.jpg`;
 }
 });
-new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,bounds:bounds,
+new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,tms:true,bounds:bounds,
 errorTileUrl:‘data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7’}).addTo(map);
 map.fitBounds(bounds);
 
