@@ -104,7 +104,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.2.0</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.2.7</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -177,20 +177,21 @@ const MILS_DEG=6400/360;
 const TILE_PX=256,LOD0_X=71,LOD0_Y=95;
 const MAP_PX_W=LOD0_X*TILE_PX,MAP_PX_H=LOD0_Y*TILE_PX;
 
-// Convert game coords (meters) to Leaflet LatLng
-// CRS.Simple: lng=x (easting), lat=y (northing), both in pixels
+// CRS.Simple with Y-flipped bounds so tile Y=0 = north (top)
+// NW corner = [MAP_PX_H, 0], SE corner = [0, MAP_PX_W]
+const mapBounds=L.latLngBounds([MAP_PX_H,0],[0,MAP_PX_W]);
+
 function g2ll(gx,gy){
-  return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
+  // lat decreases as gy increases (north=top)
+  return L.latLng(MAP_PX_H-(gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
 }
 function ll2g(ll){
   return{
     x:Math.round(Math.max(0,Math.min(MAP_W,(ll.lng/MAP_PX_W)*MAP_W))),
-    y:Math.round(Math.max(0,Math.min(MAP_H,(ll.lat/MAP_PX_H)*MAP_H)))
+    y:Math.round(Math.max(0,Math.min(MAP_H,((MAP_PX_H-ll.lat)/MAP_PX_H)*MAP_H)))
   };
 }
 function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
-
-const mapBounds=L.latLngBounds(L.latLng(0,0),L.latLng(MAP_PX_H,MAP_PX_W));
 
 const map=L.map('map',{
   crs:L.CRS.Simple,
@@ -203,9 +204,6 @@ const map=L.map('map',{
   attributionControl:false
 });
 
-// Tile layer - LOD 0 = highest detail (most zoomed in)
-// Leaflet zoom MAX_ZOOM = LOD 0, Leaflet zoom MIN_ZOOM = LOD MAX_ZOOM
-// Y is NOT flipped - EnfusionMapMaker stores Y=0 at top (north), matching Leaflet convention
 L.tileLayer('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
   tileSize:TILE_PX,
   minZoom:MIN_ZOOM,
