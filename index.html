@@ -176,27 +176,48 @@ const MAP_W=7130,MAP_H=9150,MAX_ZOOM=5,MIN_ZOOM=0;
 const MILS_DEG=6400/360;
 
 // Leaflet CRS.Simple: pixel coords = game coords scaled to [0,100]
-function g2ll(gx,gy){return L.latLng((gy/MAP_H)*95,(gx/MAP_W)*71);}
-function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/71)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/95)*MAP_H))};}
+function g2ll(gx,gy){return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);}
+function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/MAP_PX_W)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/MAP_PX_H)*MAP_H))};}
 function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
 
-const bounds=L.latLngBounds(L.latLng(0,0),L.latLng(95,71));
-const map=L.map('map',{crs:L.CRS.Simple,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,zoomSnap:0.5,zoomDelta:0.5,maxBounds:bounds,maxBoundsViscosity:0.8,attributionControl:false});
+// Map bounds based on actual tile grid at LOD 0: 71x95 tiles of 256px = 18176x24320px
+// Use pixel coords directly so Leaflet tile requests match folder numbers exactly
+const TILE_PX=256;
+const LOD0_X=71, LOD0_Y=95;
+const MAP_PX_W=LOD0_X*TILE_PX, MAP_PX_H=LOD0_Y*TILE_PX;
+const bounds=L.latLngBounds(
+  map2ll(0,0),
+  map2ll(MAP_PX_W, MAP_PX_H)
+);
 
-// Custom tile layer — LOD 0=highest detail, LOD 5=lowest
-// Leaflet zoom 0=out, zoom 5=in — we invert
+// pixel space helpers (before map exists)
+function map2ll(px,py){return L.latLng(py,px);}
+function ll2px(ll){return{x:ll.lng,y:ll.lat};}
+
+const map=L.map('map',{
+  crs:L.CRS.Simple,
+  minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,
+  zoomSnap:0.5,zoomDelta:0.5,
+  maxBounds:L.latLngBounds(map2ll(-512,-512),map2ll(MAP_PX_W+512,MAP_PX_H+512)),
+  maxBoundsViscosity:0.8,
+  attributionControl:false
+});
+
 L.TileLayer.Orlivka=L.TileLayer.extend({
   getTileUrl:function(c){
     const lod=MAX_ZOOM-c.z;
     const LOD_Y={0:95,1:48,2:25,3:12,4:7,5:4};
-    const flippedY=LOD_Y[lod]-1-c.y;
-    if(flippedY<0||flippedY>=LOD_Y[lod])return'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    const maxY=LOD_Y[lod];
+    const flippedY=maxY-1-c.y;
+    if(c.x<0||flippedY<0||flippedY>=maxY)
+      return'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
     return`Orlivka/LODS/${lod}/${c.x}/${flippedY}/tile.jpg`;
-  }
+  },
+  options:{tileSize:TILE_PX,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,
+    errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}
 });
-new L.TileLayer.Orlivka(null,{tileSize:256,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,bounds:bounds,
-  errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}).addTo(map);
-map.fitBounds(bounds);
+new L.TileLayer.Orlivka(null).addTo(map);
+map.fitBounds(L.latLngBounds(map2ll(0,0),map2ll(MAP_PX_W,MAP_PX_H)));
 
 const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:
   `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
