@@ -177,18 +177,15 @@ const MILS_DEG=6400/360;
 const TILE_PX=256,LOD0_X=71,LOD0_Y=95;
 const MAP_PX_W=LOD0_X*TILE_PX,MAP_PX_H=LOD0_Y*TILE_PX;
 
-// CRS.Simple with Y-flipped bounds so tile Y=0 = north (top)
-// NW corner = [MAP_PX_H, 0], SE corner = [0, MAP_PX_W]
-const mapBounds=L.latLngBounds([MAP_PX_H,0],[0,MAP_PX_W]);
+const mapBounds=L.latLngBounds([0,0],[MAP_PX_H,MAP_PX_W]);
 
 function g2ll(gx,gy){
-  // lat decreases as gy increases (north=top)
-  return L.latLng(MAP_PX_H-(gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
+  return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
 }
 function ll2g(ll){
   return{
     x:Math.round(Math.max(0,Math.min(MAP_W,(ll.lng/MAP_PX_W)*MAP_W))),
-    y:Math.round(Math.max(0,Math.min(MAP_H,((MAP_PX_H-ll.lat)/MAP_PX_H)*MAP_H)))
+    y:Math.round(Math.max(0,Math.min(MAP_H,(ll.lat/MAP_PX_H)*MAP_H)))
   };
 }
 function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
@@ -209,7 +206,7 @@ L.tileLayer('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
   minZoom:MIN_ZOOM,
   maxZoom:MAX_ZOOM,
   noWrap:true,
-  tms:false,
+  tms:true,
   bounds:mapBounds,
   errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
 }).addTo(map);
