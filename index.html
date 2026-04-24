@@ -104,7 +104,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.2.7</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.2.8</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -174,43 +174,56 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
 <script>
 const MAP_W=7130,MAP_H=9150,MAX_ZOOM=5,MIN_ZOOM=0;
 const MILS_DEG=6400/360;
-const TILE_PX=256,LOD0_X=71,LOD0_Y=95;
-const MAP_PX_W=LOD0_X*TILE_PX,MAP_PX_H=LOD0_Y*TILE_PX;
+const OFFSET=50; // camera looks into center of LOD0 tiles, not corner
 
-const mapBounds=L.latLngBounds([0,0],[MAP_PX_H,MAP_PX_W]);
+// Custom CRS matching reforger-map.js exactly
+L.CRS.CustomSimple=L.Util.extend({},L.CRS,{
+  projection:L.Projection.LonLat,
+  transformation:new L.Transformation(1/12.501,0,-1/12.501,0),
+  scale:function(zoom){return Math.pow(2,zoom);},
+  zoom:function(scale){return Math.log(scale)/Math.LN2;},
+  distance:function(a,b){var dx=b.lng-a.lng,dy=b.lat-a.lat;return Math.sqrt(dx*dx+dy*dy);},
+  infinite:true
+});
 
-function g2ll(gx,gy){
-  return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
-}
-function ll2g(ll){
-  return{
-    x:Math.round(Math.max(0,Math.min(MAP_W,(ll.lng/MAP_PX_W)*MAP_W))),
-    y:Math.round(Math.max(0,Math.min(MAP_H,(ll.lat/MAP_PX_H)*MAP_H)))
-  };
-}
-function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
+// Game coords <-> LatLng (matches reforger-map.js gameCoordsToLatLng)
+function g2ll(gx,gy){return L.latLng(gy+OFFSET,gx+OFFSET);}
+function ll2g(ll){return{x:Math.round(ll.lng-OFFSET),y:Math.round(ll.lat-OFFSET)};}
+function fmt(gx,gy){return String(Math.max(0,gx)).padStart(5,'0')+' '+String(Math.max(0,gy)).padStart(5,'0');}
+
+const mapBounds=L.latLngBounds(
+  L.latLng(0+OFFSET,0+OFFSET),
+  L.latLng(MAP_H+OFFSET,MAP_W+OFFSET)
+);
 
 const map=L.map('map',{
-  crs:L.CRS.Simple,
+  crs:L.CRS.CustomSimple,
+  zoom:0,
+  center:mapBounds.getCenter(),
   minZoom:MIN_ZOOM,
   maxZoom:MAX_ZOOM,
   zoomSnap:0.5,
   zoomDelta:0.5,
-  maxBounds:mapBounds.pad(0.05),
-  maxBoundsViscosity:0.9,
   attributionControl:false
 });
 
-L.tileLayer('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
-  tileSize:TILE_PX,
-  minZoom:MIN_ZOOM,
+// InvertedY tile layer matching reforger-map.js exactly
+L.TileLayer.InvertedY=L.TileLayer.extend({
+  getTileUrl:function(c){
+    c.y=-(c.y+1);
+    return L.TileLayer.prototype.getTileUrl.call(this,c);
+  }
+});
+
+new L.TileLayer.InvertedY('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
   maxZoom:MAX_ZOOM,
-  noWrap:true,
-  tms:true,
+  minZoom:MIN_ZOOM,
+  zoomReverse:true,
   bounds:mapBounds,
   errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
 }).addTo(map);
 
+map.setMaxBounds(mapBounds.pad(0.2));
 map.fitBounds(mapBounds);
 
 const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:
