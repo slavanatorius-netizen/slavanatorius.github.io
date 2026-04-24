@@ -177,35 +177,46 @@ const MILS_DEG=6400/360;
 const TILE_PX=256,LOD0_X=71,LOD0_Y=95;
 const MAP_PX_W=LOD0_X*TILE_PX,MAP_PX_H=LOD0_Y*TILE_PX;
 
-function g2ll(gx,gy){return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);}
-function ll2g(ll){return{x:Math.round(Math.max(0,(ll.lng/MAP_PX_W)*MAP_W)),y:Math.round(Math.max(0,(ll.lat/MAP_PX_H)*MAP_H))};}
+// Convert game coords (meters) to Leaflet LatLng
+// CRS.Simple: lng=x (easting), lat=y (northing), both in pixels
+function g2ll(gx,gy){
+  return L.latLng((gy/MAP_H)*MAP_PX_H,(gx/MAP_W)*MAP_PX_W);
+}
+function ll2g(ll){
+  return{
+    x:Math.round(Math.max(0,Math.min(MAP_W,(ll.lng/MAP_PX_W)*MAP_W))),
+    y:Math.round(Math.max(0,Math.min(MAP_H,(ll.lat/MAP_PX_H)*MAP_H)))
+  };
+}
 function fmt(gx,gy){return String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0');}
+
+const mapBounds=L.latLngBounds(L.latLng(0,0),L.latLng(MAP_PX_H,MAP_PX_W));
 
 const map=L.map('map',{
   crs:L.CRS.Simple,
-  minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,
-  zoomSnap:0.5,zoomDelta:0.5,
-  maxBoundsViscosity:0.8,
+  minZoom:MIN_ZOOM,
+  maxZoom:MAX_ZOOM,
+  zoomSnap:0.5,
+  zoomDelta:0.5,
+  maxBounds:mapBounds.pad(0.05),
+  maxBoundsViscosity:0.9,
   attributionControl:false
 });
 
-L.TileLayer.Orlivka=L.TileLayer.extend({
-  getTileUrl:function(c){
-    const lod=MAX_ZOOM-c.z;
-    const LOD_Y={0:95,1:48,2:25,3:12,4:7,5:4};
-    const maxY=LOD_Y[lod];
-    const flippedY=maxY-1-c.y;
-    if(c.x<0||c.x>=71||flippedY<0||flippedY>=maxY)
-      return'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    return'Orlivka/LODS/'+lod+'/'+c.x+'/'+flippedY+'/tile.jpg';
-  },
-  options:{tileSize:TILE_PX,minZoom:MIN_ZOOM,maxZoom:MAX_ZOOM,noWrap:true,
-    errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'}
-});
-new L.TileLayer.Orlivka(null).addTo(map);
-const mapBounds=L.latLngBounds(L.latLng(0,0),L.latLng(MAP_PX_H,MAP_PX_W));
+// Tile layer - LOD 0 = highest detail (most zoomed in)
+// Leaflet zoom MAX_ZOOM = LOD 0, Leaflet zoom MIN_ZOOM = LOD MAX_ZOOM
+// Y is NOT flipped - EnfusionMapMaker stores Y=0 at top (north), matching Leaflet convention
+L.tileLayer('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
+  tileSize:TILE_PX,
+  minZoom:MIN_ZOOM,
+  maxZoom:MAX_ZOOM,
+  noWrap:true,
+  tms:false,
+  bounds:mapBounds,
+  errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+}).addTo(map);
+
 map.fitBounds(mapBounds);
-map.setMaxBounds(mapBounds.pad(0.1));
 
 const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:
   `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
