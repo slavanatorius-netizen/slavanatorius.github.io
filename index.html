@@ -109,7 +109,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
 <div class="main">
   <div class="map-wrap">
     <div id="map"></div>
-    <div class="map-hud" id="hud">----- -----</div>
+    <div id="hud" style="position:absolute;z-index:900;background:rgba(0,0,0,0.78);border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:3px 8px;font-size:11px;color:#7eb34a;pointer-events:none;letter-spacing:.05em;font-family:'Courier New',monospace;display:none;white-space:nowrap;"></div>
     <div class="click-banner" id="clickBanner">▶ CLICK — GUN POSITION</div>
     <div class="mode-badge" id="modeBadge" onclick="toggleMode()">□ MOVING</div>
   </div>
@@ -128,12 +128,28 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
           <div class="wtab" data-w="2b14">2B14</div>
         </div>
         <div class="sec">Positions</div>
-        <div class="pos-card">
-          <div><div class="pos-lbl">Gun</div><div class="pos-val" id="gunCoord">Click map to set</div></div>
-          <button class="btn-sm danger" onclick="resetGun()" style="font-size:8px;">Reset</button>
+        <div class="pos-card" style="flex-direction:column;gap:5px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div class="pos-lbl">Gun</div>
+            <button class="btn-sm danger" onclick="resetGun()" style="font-size:8px;">Reset</button>
+          </div>
+          <div style="display:flex;gap:5px;">
+            <input type="text" id="gunInput" placeholder="00000 00000" maxlength="11"
+              style="font-size:12px;font-family:'Courier New',monospace;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);flex:1;outline:none;"
+              oninput="formatGridInput(this)" onkeydown="if(event.key==='Enter')setFromInput('gun')"/>
+            <button class="btn-sm" onclick="setFromInput('gun')" style="padding:4px 8px;">Set</button>
+          </div>
+          <div class="pos-val" id="gunCoord" style="font-size:10px;color:var(--text3);">Click map or type grid</div>
         </div>
-        <div class="pos-card">
-          <div><div class="pos-lbl">Target</div><div class="pos-val" id="tgtCoord">—</div></div>
+        <div class="pos-card" style="flex-direction:column;gap:5px;margin-top:5px;">
+          <div class="pos-lbl">Target</div>
+          <div style="display:flex;gap:5px;">
+            <input type="text" id="tgtInput" placeholder="00000 00000" maxlength="11"
+              style="font-size:12px;font-family:'Courier New',monospace;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--rs);background:var(--surface2);color:var(--text);flex:1;outline:none;"
+              oninput="formatGridInput(this)" onkeydown="if(event.key==='Enter')setFromInput('tgt')"/>
+            <button class="btn-sm" onclick="setFromInput('tgt')" style="padding:4px 8px;">Set</button>
+          </div>
+          <div class="pos-val" id="tgtCoord" style="font-size:10px;color:var(--text3);">—</div>
         </div>
         <div class="row2" style="margin-bottom:7px;">
           <div class="field"><label>Gun alt (m)</label><input type="number" id="galt" placeholder="0" inputmode="numeric"></div>
@@ -257,18 +273,39 @@ const GUN_ICON=mkIcon('#7eb34a','G'),TGT_ICON=mkIcon('#e05040','T');
 let gMkr=null,tMkr=null,line=null;
 
 function setG(gx,gy){
+  gx=Math.round(Math.max(0,Math.min(MAP_W,gx)));
+  gy=Math.round(Math.max(0,Math.min(MAP_H,gy)));
   const ll=g2ll(gx,gy);
   if(gMkr)gMkr.setLatLng(ll);
   else gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000}).addTo(map);
   document.getElementById('gunCoord').textContent=fmt(gx,gy);
+  document.getElementById('gunX').value=gx;
+  document.getElementById('gunY').value=gy;
+  const gh=getHeight(gx,gy);
+  if(gh>0)document.getElementById('galt').value=gh.toFixed(1);
   drawLine();
 }
 function setT(gx,gy){
+  gx=Math.round(Math.max(0,Math.min(MAP_W,gx)));
+  gy=Math.round(Math.max(0,Math.min(MAP_H,gy)));
   const ll=g2ll(gx,gy);
   if(tMkr)tMkr.setLatLng(ll);
   else tMkr=L.marker(ll,{icon:TGT_ICON,zIndexOffset:999}).addTo(map);
   document.getElementById('tgtCoord').textContent=fmt(gx,gy);
+  document.getElementById('tgtX').value=gx;
+  document.getElementById('tgtY').value=gy;
+  const th=getHeight(gx,gy);
+  if(th>0)document.getElementById('talt').value=th.toFixed(1);
   drawLine();
+}
+function onCoordInput(who){
+  const x=parseInt(who==='gun'?document.getElementById('gunX').value:document.getElementById('tgtX').value);
+  const y=parseInt(who==='gun'?document.getElementById('gunY').value:document.getElementById('tgtY').value);
+  if(!isNaN(x)&&!isNaN(y)&&x>=0&&y>=0){
+    if(who==='gun'){setG(x,y);nextClick='target';}
+    else{setT(x,y);if(!staticMode)nextClick='gun';}
+    updateBanner();
+  }
 }
 function drawLine(){
   if(!gMkr||!tMkr)return;
@@ -276,8 +313,8 @@ function drawLine(){
   if(line)line.setLatLngs(pts);
   else line=L.polyline(pts,{color:'rgba(255,210,0,0.55)',weight:1.5,dashArray:'6,4'}).addTo(map);
 }
-function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map to set';}
-function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('tgtCoord').textContent='—';}
+function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map or type coords';document.getElementById('gunX').value='';document.getElementById('gunY').value='';}
+function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('tgtCoord').textContent='—';document.getElementById('tgtX').value='';document.getElementById('tgtY').value='';}
 
 let staticMode=false,gunLocked=false,nextClick='gun';
 
@@ -291,24 +328,43 @@ function toggleMode(){
 function resetGun(){clearG();clearT();gunLocked=false;nextClick='gun';updateBanner();document.getElementById('resWrap').style.display='none';}
 function updateBanner(){document.getElementById('clickBanner').textContent=nextClick==='gun'?'▶ CLICK — GUN POSITION':'▶ CLICK — TARGET POSITION';}
 
+map.on('dblclick',function(e){
+  L.DomEvent.stop(e);
+  const gp=ll2g(e.latlng);
+  if(nextClick==='gun'){
+    setG(gp.x,gp.y);nextClick='target';if(staticMode)gunLocked=true;
+  } else {
+    setT(gp.x,gp.y);if(!staticMode)nextClick='gun';
+  }
+  updateBanner();
+});
 map.on('click',function(e){
   const gp=ll2g(e.latlng);
   if(nextClick==='gun'){
-    setG(gp.x,gp.y);
-    const gh=getHeight(gp.x,gp.y);
-    if(gh>0)document.getElementById('galt').value=gh.toFixed(1);
-    nextClick='target';if(staticMode)gunLocked=true;
+    setG(gp.x,gp.y);nextClick='target';if(staticMode)gunLocked=true;
   } else {
-    setT(gp.x,gp.y);
-    const th=getHeight(gp.x,gp.y);
-    if(th>0)document.getElementById('talt').value=th.toFixed(1);
-    if(!staticMode)nextClick='gun';
+    setT(gp.x,gp.y);if(!staticMode)nextClick='gun';
   }
   updateBanner();
 });
 map.on('mousemove',function(e){
   const gp=ll2g(e.latlng);
-  document.getElementById('hud').textContent=String(Math.max(0,gp.x)).padStart(5,'0')+'  '+String(Math.max(0,gp.y)).padStart(5,'0');
+  const gx=Math.max(0,Math.min(MAP_W,gp.x));
+  const gy=Math.max(0,Math.min(MAP_H,gp.y));
+  const h=getHeight(gx,gy);
+  const hStr=h>0?'  '+h.toFixed(0)+'m':'';
+  const hud=document.getElementById('hud');
+  hud.textContent=String(gx).padStart(5,'0')+' '+String(gy).padStart(5,'0')+hStr;
+  hud.style.display='block';
+  const mapRect=document.getElementById('map').getBoundingClientRect();
+  let cx=e.originalEvent.clientX-mapRect.left+16;
+  let cy=e.originalEvent.clientY-mapRect.top-32;
+  if(cx+120>mapRect.width)cx=e.originalEvent.clientX-mapRect.left-130;
+  hud.style.left=cx+'px';
+  hud.style.top=cy+'px';
+});
+map.on('mouseout',function(){
+  document.getElementById('hud').style.display='none';
 });
 
 // BALLISTICS
