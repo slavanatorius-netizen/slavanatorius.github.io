@@ -109,7 +109,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.3.1</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.3.2</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -190,7 +190,10 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
           <div id="altNote" class="note" style="display:none;"></div>
           <div id="windNote" class="note" style="display:none;"></div>
           <div id="warnNote" class="note warn" style="display:none;"></div>
-          <div style="text-align:right;margin-top:6px;"><button class="btn-sm" onclick="logMission()">+ Log</button></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            <button id="fireBtn" class="btn-sm" onclick="fireShell()" style="background:#c0392b;border-color:#c0392b;color:#fff;font-weight:700;padding:6px 14px;letter-spacing:.12em;display:none;">&#x25B6; FIRE</button>
+            <button class="btn-sm" onclick="logMission()">+ Log</button>
+          </div>
         </div>
       </div>
       <div class="tab" id="t-log">
@@ -340,7 +343,7 @@ function toggleMode(){
   else{b.textContent='□ MOVING';b.classList.remove('son');gunLocked=false;nextClick=gMkr?'target':'gun';}
   updateBanner();
 }
-function resetGun(){clearG();clearT();gunLocked=false;nextClick='gun';updateBanner();document.getElementById('resWrap').style.display='none';}
+function resetGun(){clearG();clearT();gunLocked=false;nextClick='gun';updateBanner();document.getElementById('resWrap').style.display='none';const fb=document.getElementById('fireBtn');if(fb)fb.style.display='none';}
 function updateBanner(){document.getElementById('clickBanner').textContent=nextClick==='gun'?'▶ CLICK — GUN POSITION':'▶ CLICK — TARGET POSITION';}
 
 map.on('dblclick',function(e){
@@ -440,6 +443,12 @@ function drawRings(){
 // SHELL FLIGHT ANIMATION
 // ============================================================
 let animFrame=null,animMarker=null;
+
+function fireShell(){
+  if(!lastRes||lastRes.defl==null||!gMkr||!tMkr)return;
+  const tofNum=parseFloat(lastRes.tof);
+  if(!isNaN(tofNum))animShell(gMkr.getLatLng(),tMkr.getLatLng(),tofNum);
+}
 
 function clearAnim(){
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
@@ -670,11 +679,8 @@ function calc(){
     }
   }
   lastRes=result;res.style.display='block';
-  // Trigger shell animation if we have valid elevation and markers
-  if(result.defl!=null&&result.tof&&gMkr&&tMkr){
-    const tofNum=parseFloat(result.tof);
-    if(!isNaN(tofNum))animShell(gMkr.getLatLng(),tMkr.getLatLng(),tofNum);
-  }
+  const fb=document.getElementById('fireBtn');
+  if(fb)fb.style.display=(result.defl!=null&&gMkr&&tMkr)?'block':'none';
 }
 
 function logMission(){
