@@ -83,6 +83,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
 .lv span{font-size:8px;font-weight:400;color:var(--text3);margin-right:2px;text-transform:uppercase;}
 .lempty{font-size:10px;color:var(--text3);text-align:center;padding:2rem 0;letter-spacing:.1em;}
 .lctrl{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.ring-label{
+  background:transparent;border:none;box-shadow:none;
+  font-size:9px;font-family:'Courier New',monospace;font-weight:700;
+  white-space:nowrap;pointer-events:none;
+}
 @media(max-width:640px){
   .main{flex-direction:column;}
   .sidebar{width:100%;border-left:none;border-top:1px solid var(--border);max-height:55vh;}
@@ -104,7 +109,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.2.9</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.3.1</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -126,6 +131,15 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
           <div class="wtab" data-w="m252">M252</div>
           <div class="wtab" data-w="m224">M224</div>
           <div class="wtab" data-w="2b14">2B14</div>
+          <div class="wtab" data-w="bm21">BM-21</div>
+        </div>
+        <div id="shellRow" style="display:none;margin-bottom:8px;">
+          <div class="sec" style="margin-top:0;margin-bottom:5px;">Shell</div>
+          <div class="wtabs" id="shellTabs">
+            <div class="wtab on" data-s="he" style="color:#e05040;border-color:#e05040;">HE</div>
+            <div class="wtab" data-s="flare" style="color:#f0c040;">Flare</div>
+            <div class="wtab" data-s="smoke" style="color:#a0a0a0;">Smoke</div>
+          </div>
         </div>
         <div class="sec">Positions</div>
         <div class="pos-card" style="flex-direction:column;gap:5px;">
@@ -160,8 +174,8 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
           <div class="field"><label>Headwind (m/s)</label><input type="number" id="hw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ to gun | − to tgt</div></div>
           <div class="field"><label>Crosswind (m/s)</label><input type="number" id="cw" placeholder="0" step="0.1" inputmode="decimal"><div class="hint">+ left | − right</div></div>
         </div>
-        <div class="sec">Charge</div>
-        <div class="field"><select id="csel"></select></div>
+        <div class="sec" id="chargeLbl">Charge</div>
+        <div class="field"><select id="csel" onchange="drawRings()"></select></div>
         <div class="field" style="margin-top:6px;"><label>Label (optional)</label><input type="text" id="mlabel" placeholder="e.g. T1 — armour treeline"></div>
         <button class="btn-calc" onclick="calc()">▶ Calculate</button>
         <div id="err" class="note err" style="display:none;"></div>
@@ -277,13 +291,14 @@ function setG(gx,gy){
   gy=Math.round(Math.max(0,Math.min(MAP_H,gy)));
   const ll=g2ll(gx,gy);
   if(gMkr)gMkr.setLatLng(ll);
-  else gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000}).addTo(map);
+  else { gMkr=L.marker(ll,{icon:GUN_ICON,zIndexOffset:1000,draggable:true}).addTo(map); addGunDrag(); }
   document.getElementById('gunCoord').textContent=fmt(gx,gy);
   document.getElementById('gunX').value=gx;
   document.getElementById('gunY').value=gy;
   const gh=getHeight(gx,gy);
   if(gh>0)document.getElementById('galt').value=gh.toFixed(1);
   drawLine();
+  drawRings();
 }
 function setT(gx,gy){
   gx=Math.round(Math.max(0,Math.min(MAP_W,gx)));
@@ -313,7 +328,7 @@ function drawLine(){
   if(line)line.setLatLngs(pts);
   else line=L.polyline(pts,{color:'rgba(255,210,0,0.55)',weight:1.5,dashArray:'6,4'}).addTo(map);
 }
-function clearG(){if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map or type coords';document.getElementById('gunX').value='';document.getElementById('gunY').value='';}
+function clearG(){clearRings();if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map or type coords';document.getElementById('gunX').value='';document.getElementById('gunY').value='';}
 function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('tgtCoord').textContent='—';document.getElementById('tgtX').value='';document.getElementById('tgtY').value='';}
 
 let staticMode=false,gunLocked=false,nextClick='gun';
@@ -363,9 +378,93 @@ map.on('mousemove',function(e){
   hud.style.left=cx+'px';
   hud.style.top=cy+'px';
 });
+// Redraw rings when gun marker is dragged (moving mode)
+// We re-add drag support to gun marker when placed
+function addGunDrag() {
+  if (!gMkr) return;
+  gMkr.options.draggable = true;
+  gMkr.dragging && gMkr.dragging.enable();
+  gMkr.on('drag', function() {
+    const gp = ll2g(gMkr.getLatLng());
+    document.getElementById('gunCoord').textContent = fmt(gp.x, gp.y);
+    document.getElementById('gunX').value = gp.x;
+    document.getElementById('gunY').value = gp.y;
+    drawLine();
+    drawRings();
+  });
+  gMkr.on('dragend', function() {
+    const gp = ll2g(gMkr.getLatLng());
+    const gh = getHeight(gp.x, gp.y);
+    if (gh > 0) document.getElementById('galt').value = gh.toFixed(1);
+  });
+}
+
 map.on('mouseout',function(){
   document.getElementById('hud').style.display='none';
 });
+
+// ============================================================
+// RANGE RINGS
+// ============================================================
+let ringLayers=[];
+
+function getChargesForWeapon(){
+  if(aw==='m777')return M777C.map(c=>({name:c.name,col:c.col,min:c.t[0][0],max:c.t[c.t.length-1][0]}));
+  if(aw==='2b14'){const sh=MORT['2b14'].shells[activeShell];return sh.c.map(c=>({name:c.name,col:c.col,min:c.t[0][0],max:c.t[c.t.length-1][0]}));}
+  const m=MORT[aw];
+  if(m.tableMode)return m.c.map(c=>({name:c.name,col:c.col,min:c.t[0][0],max:c.t[c.t.length-1][0]}));
+  return m.c.map(c=>({name:c.n,col:c.col,min:c.mn,max:c.mx}));
+}
+
+function clearRings(){ringLayers.forEach(l=>map.removeLayer(l));ringLayers=[];}
+
+function drawRings(){
+  clearRings();
+  if(!gMkr)return;
+  const csv=document.getElementById('csel').value;
+  const charges=getChargesForWeapon();
+  const ll=gMkr.getLatLng();
+  const toShow=csv==='auto'?charges:(()=>{const i=parseInt(csv);return(!isNaN(i)&&charges[i])?[charges[i]]:charges;})();
+  toShow.forEach(ch=>{
+    const col=ch.col||'#7eb34a';
+    if(ch.min>0){
+      ringLayers.push(L.circle(ll,{radius:ch.min,color:col,weight:1,opacity:0.4,fill:false,dashArray:'4,6'}).addTo(map));
+    }
+    ringLayers.push(L.circle(ll,{radius:ch.max,color:col,weight:1.5,opacity:0.7,fill:false}).addTo(map));
+    const labelLL=L.latLng(ll.lat+ch.max,ll.lng);
+    ringLayers.push(L.marker(labelLL,{icon:L.divIcon({className:'ring-label',html:'<span style="color:'+col+';text-shadow:0 0 3px #000,0 0 3px #000;">'+ch.name+'</span>',iconAnchor:[30,0]}),interactive:false}).addTo(map));
+  });
+}
+
+// ============================================================
+// SHELL FLIGHT ANIMATION
+// ============================================================
+let animFrame=null,animMarker=null;
+
+function clearAnim(){
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  if(animMarker){map.removeLayer(animMarker);animMarker=null;}
+}
+
+function animShell(gunLL,tgtLL,tofSeconds){
+  clearAnim();
+  const t0=performance.now(),dur=tofSeconds*1000;
+  const dx=tgtLL.lng-gunLL.lng,dy=tgtLL.lat-gunLL.lat;
+  const dist=Math.sqrt(dx*dx+dy*dy);
+  const arcH=dist*0.12;
+  const len=dist||1,px=-dy/len,py=dx/len;
+  const icon=L.divIcon({className:'',html:'<div style="width:8px;height:8px;border-radius:50%;background:#ffdd00;border:1.5px solid #ff8800;box-shadow:0 0 8px #ffaa00;"></div>',iconSize:[8,8],iconAnchor:[4,4]});
+  animMarker=L.marker(gunLL,{icon:icon,zIndexOffset:2000,interactive:false}).addTo(map);
+  function step(now){
+    const t=Math.min((now-t0)/dur,1);
+    const arc=Math.sin(t*Math.PI)*arcH;
+    animMarker.setLatLng(L.latLng(gunLL.lat+dy*t+px*arc,gunLL.lng+dx*t+py*arc));
+    if(t<1)animFrame=requestAnimationFrame(step);
+    else{animMarker.setLatLng(tgtLL);setTimeout(clearAnim,400);}
+  }
+  animFrame=requestAnimationFrame(step);
+}
+
 
 // BALLISTICS
 const M777C=[
@@ -378,10 +477,103 @@ const M777C=[
 const MORT={
   m252:{label:"M252 (81mm)",wd:1.4,wr:1.8,c:[{n:"Charge 0",mn:73,mx:490,mv:69,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:200,mx:900,mv:109,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:400,mx:1500,mv:147,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:700,mx:2100,mv:185,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1000,mx:3000,mv:225,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1500,mx:4000,mv:273,col:"#A32D2D",bg:"rgba(163,45,45,0.3)"},{n:"Charge 6",mn:2000,mx:5608,mv:320,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
   m224:{label:"M224 (60mm)",wd:1.8,wr:2.2,c:[{n:"Charge 0",mn:40,mx:330,mv:55,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:100,mx:600,mv:89,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:200,mx:900,mv:120,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:400,mx:1200,mv:150,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:700,mx:1800,mv:185,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1000,mx:2490,mv:218,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
-  "2b14":{label:"2B14 (82mm)",wd:1.5,wr:1.9,c:[{n:"Charge 0",mn:80,mx:520,mv:72,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:250,mx:950,mv:115,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:450,mx:1600,mv:155,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:750,mx:2200,mv:196,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1100,mx:3000,mv:238,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1600,mx:4270,mv:282,col:"#555550",bg:"rgba(85,85,80,0.3)"}]}
-};
+  "2b14":{label:"2B14 (82mm)",tableMode:true,shells:{
+  "he":{name:"O-832DU HE",col:"#e05040",c:[
+    {name:"Ring 0",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[
+      [50,1455,15.0,null],[100,1411,15.0,0.1],[150,1365,14.9,0.1],
+      [200,1318,14.8,0.2],[250,1268,14.6,0.2],[300,1217,14.4,0.3],
+      [350,1159,14.1,0.4],[400,1095,13.7,0.5],[450,1023,13.2,0.8],
+      [500,922,12.4,null]]},
+    {name:"Ring 1",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[
+      [100,1446,19.5,0.1],[200,1392,19.4,0.1],[300,1335,19.2,0.1],
+      [400,1275,18.9,0.1],[500,1212,18.6,0.2],[600,1141,18.1,0.3],
+      [700,1058,17.4,0.4],[800,952,16.4,0.9]]},
+    {name:"Ring 2",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[
+      [200,1432,24.8,null],[300,1397,24.7,null],[400,1362,24.6,0.1],
+      [500,1325,24.4,0.1],[600,1288,24.2,0.1],[700,1248,24.0,0.1],
+      [800,1207,23.7,0.2],[900,1162,23.3,0.2],[1000,1114,22.9,0.3],
+      [1100,1060,22.3,0.3],[1200,997,21.5,0.4],[1300,914,20.4,0.8],
+      [1400,755,17.8,null]]},
+    {name:"Ring 3",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[
+      [300,1423,28.9,null],[400,1397,28.9,0.1],[500,1370,28.8,0.1],
+      [600,1343,28.6,null],[700,1315,28.5,0.1],[800,1286,28.3,0.1],
+      [900,1257,28.1,0.1],[1000,1226,27.9,0.2],[1100,1193,27.6,0.2],
+      [1200,1159,27.2,0.2],[1300,1123,26.8,0.2],[1400,1084,26.4,0.3],
+      [1500,1040,25.8,0.3],[1600,991,25.1,0.4],[1700,932,24.2,0.6],
+      [1800,851,22.8,1.3]]},
+    {name:"Ring 4",col:"#854F0B",bg:"rgba(133,79,11,0.3)",t:[
+      [400,1418,32.9,null],[500,1398,32.9,0.1],[600,1376,32.8,0.1],
+      [700,1355,32.7,0.1],[800,1333,32.6,0.1],[900,1311,32.4,0.1],
+      [1000,1288,32.2,null],[1100,1264,32.1,0.1],[1200,1240,31.8,0.1],
+      [1300,1215,31.6,0.1],[1400,1189,31.3,0.1],[1500,1161,31.0,0.2],
+      [1600,1133,30.7,0.2],[1700,1102,30.3,0.2],[1800,1069,29.8,0.3],
+      [1900,1034,29.3,0.4],[2000,995,28.7,0.5],[2100,950,27.9,0.7],
+      [2200,896,26.9,1.4],[2300,820,25.3,null]]}
+  ]},
+  "flare":{name:"S-832S Flare",col:"#f0c040",c:[
+    {name:"Ring 1",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[
+      [100,1421,16.4,0.1],[150,1381,16.3,0.1],[200,1339,16.2,0.1],
+      [250,1296,16.1,0.2],[300,1251,15.9,0.2],[350,1203,15.7,0.3],
+      [400,1151,15.4,0.4],[450,1093,15.0,0.5],[500,1028,14.5,0.7],
+      [550,945,13.8,1.5],[600,799,12.3,null]]},
+    {name:"Ring 2",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[
+      [200,1417,23.6,null],[300,1374,23.5,0.1],[400,1330,23.3,0.1],
+      [500,1284,23.1,0.1],[600,1234,22.8,0.2],[700,1182,22.4,0.2],
+      [800,1124,21.9,0.3],[900,1057,21.3,0.4],[1000,979,20.4,0.6],
+      [1100,870,18.9,1.3]]},
+    {name:"Ring 3",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[
+      [300,1411,29.0,0.1],[400,1380,28.9,0.1],[500,1348,28.7,0.1],
+      [600,1315,28.6,0.1],[700,1281,28.4,0.2],[800,1246,28.1,0.1],
+      [900,1209,27.8,0.2],[1000,1170,27.4,0.2],[1100,1128,27.0,0.3],
+      [1200,1082,26.5,0.3],[1300,1031,25.8,0.4],[1400,973,25.0,0.5],
+      [1500,903,23.9,0.7],[1600,807,22.3,null]]},
+    {name:"Ring 4",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[
+      [400,1411,35.3,null],[500,1388,35.2,null],[600,1364,35.1,null],
+      [700,1341,35.0,0.1],[800,1316,34.8,0.1],[900,1291,34.7,0.2],
+      [1000,1265,34.4,0.1],[1100,1238,34.2,0.1],[1200,1210,33.9,0.1],
+      [1300,1181,33.6,0.2],[1400,1150,33.2,0.2],[1500,1119,32.8,0.2],
+      [1600,1085,32.4,0.3],[1700,1048,31.8,0.3],[1800,1009,31.2,0.4],
+      [1900,965,30.4,0.4],[2000,917,29.6,0.5],[2100,860,28.4,0.7],
+      [2200,787,26.9,null]]}
+  ]},
+  "smoke":{name:"D-832DU Smoke",col:"#a0a0a0",c:[
+    {name:"Ring 0",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[
+      [50,1450,14.1,0.1],[100,1399,14.0,0.1],[150,1347,13.9,0.1],
+      [200,1292,13.8,0.2],[250,1235,13.6,0.3],[300,1172,13.3,0.4],
+      [350,1102,12.9,0.5],[400,1020,12.4,1.0],[450,898,11.4,null]]},
+    {name:"Ring 1",col:"#185FA5",bg:"rgba(24,95,165,0.3)",t:[
+      [200,1381,18.4,0.1],[300,1319,18.2,0.1],[400,1252,17.9,0.1],
+      [500,1179,17.5,0.2],[600,1097,16.9,0.4],[700,993,16.0,0.7],
+      [800,805,13.9,null]]},
+    {name:"Ring 2",col:"#993C1D",bg:"rgba(153,60,29,0.3)",t:[
+      [300,1387,23.5,0.1],[400,1348,23.3,null],[500,1308,23.2,0.1],
+      [600,1266,22.9,0.1],[700,1222,22.7,0.2],[800,1175,22.3,0.2],
+      [900,1123,21.8,0.2],[1000,1065,21.3,0.4],[1100,994,20.4,0.5],
+      [1200,902,19.2,0.9]]},
+    {name:"Ring 3",col:"#534AB7",bg:"rgba(83,74,183,0.3)",t:[
+      [400,1387,27.3,null],[500,1357,27.2,null],[600,1327,27.1,0.1],
+      [700,1296,26.9,0.1],[800,1264,26.7,0.1],[900,1231,26.5,0.2],
+      [1000,1196,26.2,0.2],[1100,1159,25.8,0.2],[1200,1119,25.4,0.3],
+      [1300,1075,24.9,0.4],[1400,1026,24.3,0.5],[1500,969,23.5,0.8],
+      [1600,896,22.3,null],[1700,753,19.8,null]]}
+  ]}
+}}
+,
+  "bm21":{label:"BM-21 Grad (122mm)",tableMode:true,c:[
+    {name:"Direct Fire",col:"#c0392b",bg:"rgba(192,57,43,0.3)",t:[
+      [200,19,1.0,null],[400,23,1.5,null],[600,29,2.1,null],
+      [800,35,2.6,null],[1000,42,3.1,null],[1200,48,3.6,null],
+      [1400,55,4.2,null],[1600,62,4.8,null],[1800,68,5.3,null],
+      [2000,75,5.9,null],[2200,82,6.4,null],[2400,89,7.0,null],
+      [2600,97,7.6,null],[2800,104,8.1,null],[3000,111,8.7,null],
+      [3200,119,9.3,null],[3400,127,9.9,null],[3600,134,10.5,null],
+      [3800,142,11.1,null],[4000,150,11.7,null],[4200,158,12.4,null],
+      [4400,166,13.0,null],[4600,175,13.6,null],[4800,183,14.2,null],
+      [5000,192,14.9,null],[5200,200,15.6,null],[5400,209,16.2,null],
+      [5600,218,17.0,null],[5800,228,17.6,null]]}
+  ]}};
 
-let aw="m777",lastRes=null,mlog=[],mcnt=1;
+let aw="m777",activeShell="he",lastRes=null,mlog=[],mcnt=1;
 
 function interp(tbl,dist){
   if(dist<=tbl[0][0])return[...tbl[0]];
@@ -416,7 +608,7 @@ function calc(){
   addR('Distance',Math.round(dist).toLocaleString(),'meters');
   addR('Bearing',bear.toFixed(1)+'°','degrees true');
   const csv=document.getElementById('csel').value;
-  const wlbl=aw==='m777'?'M777 (155mm)':MORT[aw].label;
+  const wlbl=aw==='m777'?'M777 (155mm)':(aw==='2b14'?'2B14 — '+MORT['2b14'].shells[activeShell].name:MORT[aw].label);
   let result={weapon:wlbl,dist:Math.round(dist),bear,label:document.getElementById('mlabel').value.trim(),hw,cw,
     gunC:fmt(gun.x,gun.y),tgtC:fmt(tgt.x,tgt.y)};
 
@@ -440,24 +632,49 @@ function calc(){
     }
   } else {
     const m=MORT[aw];
-    let ch=csv==='auto'?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
-    if(!ch){document.getElementById('warnNote').textContent=`${Math.round(dist)}m outside all charge ranges.`;document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
-    else{
-      if(dist<ch.mn||dist>ch.mx){document.getElementById('warnNote').textContent=`${ch.n}: ${ch.mn}–${ch.mx}m.`;document.getElementById('warnNote').style.display='block';}
-      const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
-      let elev=mortElev(dist,altDiff,ch.mv);
-      if(elev==null||elev<0||elev>1422){document.getElementById('warnNote').textContent=(document.getElementById('warnNote').style.display==='block'?document.getElementById('warnNote').textContent+' ':'')+'Elev OOB.';document.getElementById('warnNote').style.display='block';elev=null;}
-      const ea=elev!=null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
-      addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea!=null?ea:'—','mils');addR('TOF',Math.round(tof)+'s','approx.');
-      document.getElementById('crRow').style.display='block';
-      const bd=document.getElementById('crBadge');bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
-      document.getElementById('crRange').textContent=`(${ch.mn}–${ch.mx}m)`;
-      const wp=[];if(Math.abs(hw)>0.05)wp.push(`HW→${rc>0?'+':''}${rc} mils`);if(Math.abs(cw)>0.05)wp.push(`CW→${dc>0?'+':''}${dc} mils`);
-      if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' (included)';document.getElementById('windNote').style.display='block';}
-      result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+'s';
+    if(m.tableMode){
+      const _tc=aw==='2b14'?get2b14Charges():m.c;let ch=csv==='auto'?_tc.find(c=>dist>=c.t[0][0]&&dist<=c.t[c.t.length-1][0]):_tc[parseInt(csv)];
+      if(!ch){document.getElementById('warnNote').textContent=Math.round(dist)+'m outside all charge ranges.';document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+      else{
+        const mn=ch.t[0][0],mx=ch.t[ch.t.length-1][0];
+        if(dist<mn||dist>mx){document.getElementById('warnNote').textContent=ch.name+': '+mn+'–'+mx+'m. Got '+Math.round(dist)+'m.';document.getElementById('warnNote').style.display='block';}
+        const row=interp(ch.t,dist);let elev=row[1];const tof=row[2],dE=row[3];
+        let ac=0;if(dE!=null&&Math.abs(altDiff)>1){ac=Math.round((altDiff/100)*dE*10);elev-=ac;document.getElementById('altNote').textContent='Alt: '+(altDiff>0?'+':'')+altDiff+'m → '+(ac>0?'−':'+')+Math.abs(ac)+' mils';document.getElementById('altNote').style.display='block';}
+        const rc=Math.round(-hw*1.2*tof/10),dc=Math.round(cw*0.8*tof/10);
+        const ea=elev+rc,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+        addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea,'mils');addR('TOF',tof.toFixed(1)+'s','from table');
+        document.getElementById('crRow').style.display='block';
+        const bd=document.getElementById('crBadge');bd.textContent=ch.name;bd.style.color=ch.col;bd.style.background=ch.bg;
+        document.getElementById('crRange').textContent='('+mn+'–'+mx+'m)';
+        const wp=[];if(Math.abs(hw)>0.05)wp.push('HW→'+(rc>0?'+':'')+rc+' mils');if(Math.abs(cw)>0.05)wp.push('CW→'+(dc>0?'+':'')+dc+' mils');
+        if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' (included)';document.getElementById('windNote').style.display='block';}
+        result.defl=da;result.elev=ea;result.charge=ch.name;result.tof=tof.toFixed(1)+'s';
+      }
+    } else {
+      let ch=csv==='auto'?m.c.find(c=>dist>=c.mn&&dist<=c.mx):m.c[parseInt(csv)];
+      if(!ch){document.getElementById('warnNote').textContent=Math.round(dist)+'m outside all charge ranges.';document.getElementById('warnNote').style.display='block';addR('Deflection','—','mils');addR('Elevation','—','mils');result.defl=null;result.elev=null;result.charge=null;result.tof=null;}
+      else{
+        if(dist<ch.mn||dist>ch.mx){document.getElementById('warnNote').textContent=ch.n+': '+ch.mn+'–'+ch.mx+'m.';document.getElementById('warnNote').style.display='block';}
+        const tof=dist/ch.mv,rc=Math.round((-hw*m.wr*tof/10)/dist*MILS_DEG*57.3),dc=Math.round((cw*m.wd*tof/10)/dist*6400/(2*Math.PI));
+        let elev=mortElev(dist,altDiff,ch.mv);
+        if(elev==null||elev<0||elev>1422){document.getElementById('warnNote').textContent=(document.getElementById('warnNote').style.display==='block'?document.getElementById('warnNote').textContent+' ':'')+'Elev OOB.';document.getElementById('warnNote').style.display='block';elev=null;}
+        const ea=elev!=null?elev+rc:null,da=(Math.round(bear*MILS_DEG)+dc+6400)%6400;
+        addR('Deflection',da,'mils (NATO 6400)');addR('Elevation',ea!=null?ea:'—','mils');addR('TOF',Math.round(tof)+'s','approx.');
+        document.getElementById('crRow').style.display='block';
+        const bd=document.getElementById('crBadge');bd.textContent=ch.n;bd.style.color=ch.col;bd.style.background=ch.bg;
+        document.getElementById('crRange').textContent='('+ch.mn+'–'+ch.mx+'m)';
+        const wp=[];if(Math.abs(hw)>0.05)wp.push('HW→'+(rc>0?'+':'')+rc+' mils');if(Math.abs(cw)>0.05)wp.push('CW→'+(dc>0?'+':'')+dc+' mils');
+        if(wp.length){document.getElementById('windNote').textContent='Wind: '+wp.join(', ')+' (included)';document.getElementById('windNote').style.display='block';}
+        result.defl=da;result.elev=ea;result.charge=ch.n;result.tof=Math.round(tof)+'s';
+      }
     }
   }
   lastRes=result;res.style.display='block';
+  // Trigger shell animation if we have valid elevation and markers
+  if(result.defl!=null&&result.tof&&gMkr&&tMkr){
+    const tofNum=parseFloat(result.tof);
+    if(!isNaN(tofNum))animShell(gMkr.getLatLng(),tMkr.getLatLng(),tofNum);
+  }
 }
 
 function logMission(){
@@ -490,16 +707,32 @@ function renderLog(){
 function delEntry(i){mlog.splice(i,1);renderLog();}
 function clearLog(){mlog=[];mcnt=1;renderLog();}
 
+function get2b14Charges(){return MORT['2b14'].shells[activeShell].c;}
 function buildCS(){
   const s=document.getElementById('csel');s.innerHTML='';
   const a=document.createElement('option');a.value='auto';a.textContent='Auto (lowest valid charge)';s.appendChild(a);
-  if(aw==='m777'){M777C.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.name}  (${c.t[0][0]}–${c.t[c.t.length-1][0]}m)`;s.appendChild(o);});}
-  else{MORT[aw].c.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c.n}  (${c.mn}–${c.mx}m)`;s.appendChild(o);});}
+  if(aw==='m777'){
+    M777C.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+'  ('+c.t[0][0]+'–'+c.t[c.t.length-1][0]+'m)';s.appendChild(o);});
+  } else if(MORT[aw].tableMode){
+    const charges=aw==='2b14'?get2b14Charges():MORT[aw].c;
+    charges.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.name+'  ('+c.t[0][0]+'–'+c.t[c.t.length-1][0]+'m)';s.appendChild(o);});
+  } else {
+    MORT[aw].c.forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=c.n+'  ('+c.mn+'–'+c.mx+'m)';s.appendChild(o);});
+  }
 }
 document.getElementById('wtabs').addEventListener('click',e=>{
   const t=e.target.closest('.wtab');if(!t)return;
-  document.querySelectorAll('.wtab').forEach(w=>w.classList.remove('on'));
-  t.classList.add('on');aw=t.dataset.w;buildCS();
+  document.querySelectorAll('#wtabs .wtab').forEach(w=>w.classList.remove('on'));
+  t.classList.add('on');aw=t.dataset.w;
+  document.getElementById('shellRow').style.display=aw==='2b14'?'block':'none';
+  document.getElementById('chargeLbl').textContent=aw==='2b14'?'Ring':aw==='bm21'?'Mode':'Charge';
+  buildCS();drawRings();
+  document.getElementById('resWrap').style.display='none';document.getElementById('err').style.display='none';lastRes=null;
+});
+document.getElementById('shellTabs').addEventListener('click',e=>{
+  const t=e.target.closest('.wtab');if(!t)return;
+  document.querySelectorAll('#shellTabs .wtab').forEach(w=>w.classList.remove('on'));
+  t.classList.add('on');activeShell=t.dataset.s;buildCS();
   document.getElementById('resWrap').style.display='none';document.getElementById('err').style.display='none';lastRes=null;
 });
 document.querySelectorAll('.stab').forEach(t=>{
