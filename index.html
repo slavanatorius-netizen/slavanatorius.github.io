@@ -109,7 +109,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.3.2</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.3.3</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -238,7 +238,7 @@ L.CRS.CustomSimple=L.Util.extend({},L.CRS,{
 
 // Game coords <-> LatLng (matches reforger-map.js gameCoordsToLatLng)
 function g2ll(gx,gy){return L.latLng(gy+OFFSET,gx+OFFSET);}
-function ll2g(ll){return{x:Math.round(ll.lng-OFFSET),y:Math.round(ll.lat-OFFSET)};}
+function ll2g(ll){return{x:Math.round(ll.lng-OFFSET)+4,y:Math.round(ll.lat-OFFSET)-4};}
 function fmt(gx,gy){return String(Math.max(0,gx)).padStart(5,'0')+' '+String(Math.max(0,gy)).padStart(5,'0');}
 
 const mapBounds=L.latLngBounds(
