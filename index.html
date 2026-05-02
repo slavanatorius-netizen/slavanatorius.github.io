@@ -109,7 +109,7 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.3.5</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.3.6</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
@@ -326,8 +326,8 @@ function onCoordInput(who){
   const x=parseInt(who==='gun'?document.getElementById('gunX').value:document.getElementById('tgtX').value);
   const y=parseInt(who==='gun'?document.getElementById('gunY').value:document.getElementById('tgtY').value);
   if(!isNaN(x)&&!isNaN(y)&&x>=0&&y>=0){
-    if(who==='gun'){setG(x,y);nextClick='target';}
-    else{setT(x,y);if(!staticMode)nextClick='gun';}
+    if(who==='gun') setG(x,y);
+    else setT(x,y);
     updateBanner();
   }
 }
@@ -349,12 +349,15 @@ function updateBanner(){} // banner is now static
 map.on('click',function(e){
   const gp=ll2g(e.latlng);
   if(e.originalEvent.ctrlKey){
-    // CTRL+click = set gun position
     setG(gp.x,gp.y);
   } else {
-    // Regular click = set target position
     if(gMkr) setT(gp.x,gp.y);
-    else { setG(gp.x,gp.y); } // if no gun yet, first click sets gun
+    else {
+      const err=document.getElementById('err');
+      err.textContent='CTRL+Click to set gun position first.';
+      err.style.display='block';
+      setTimeout(()=>err.style.display='none',2500);
+    }
   }
   updateBanner();
 });
