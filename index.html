@@ -109,14 +109,14 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
       <div class="hdr-sub">ArmA Reforger &mdash; SH Orlivka &mdash; M777 &bull; M252 &bull; M224 &bull; 2B14</div>
     </div>
   </div>
-  <div style="text-align:right;"><div class="ver">Ver 0.3.3</div><div class="by">by Fentastic</div></div>
+  <div style="text-align:right;"><div class="ver">Ver 0.3.5</div><div class="by">by Fentastic</div></div>
 </header>
 <div class="main">
   <div class="map-wrap">
     <div id="map"></div>
     <div id="hud" style="position:absolute;z-index:900;background:rgba(0,0,0,0.78);border:1px solid rgba(255,255,255,0.15);border-radius:5px;padding:3px 8px;font-size:11px;color:#7eb34a;pointer-events:none;letter-spacing:.05em;font-family:'Courier New',monospace;display:none;white-space:nowrap;"></div>
-    <div class="click-banner" id="clickBanner">▶ CLICK — GUN POSITION</div>
-    <div class="mode-badge" id="modeBadge" onclick="toggleMode()">□ MOVING</div>
+    <div class="click-banner" id="clickBanner" style="font-size:9px;">CTRL+CLICK: Gun &nbsp;|&nbsp; CLICK: Target</div>
+    
   </div>
   <div class="sidebar">
     <div class="stabs">
@@ -201,6 +201,11 @@ header{background:var(--surface);border-bottom:1px solid var(--border);padding:7
         <div id="logList"><div class="lempty">NO MISSIONS LOGGED</div></div>
       </div>
     </div>
+    <div style="padding:8px 10px;border-top:1px solid rgba(255,255,255,0.08);font-size:9px;color:#686558;line-height:1.7;letter-spacing:.04em;flex-shrink:0;">
+      <span style="color:#7eb34a;font-weight:700;">CTRL+CLICK</span> — Set gun position<br>
+      <span style="color:#e05040;font-weight:700;">CLICK</span> — Set target position<br>
+      <span style="color:#686558;">Or type coordinates above</span>
+    </div>
   </div>
 </div>
 </div>
@@ -238,7 +243,7 @@ L.CRS.CustomSimple=L.Util.extend({},L.CRS,{
 
 // Game coords <-> LatLng (matches reforger-map.js gameCoordsToLatLng)
 function g2ll(gx,gy){return L.latLng(gy+OFFSET,gx+OFFSET);}
-function ll2g(ll){return{x:Math.round(ll.lng-OFFSET)+4,y:Math.round(ll.lat-OFFSET)-4};}
+function ll2g(ll){const rx=ll.lng-OFFSET,ry=ll.lat-OFFSET;return{x:Math.round(rx*1.000304-2.033),y:Math.round(ry*0.998272+5.283)};}
 function fmt(gx,gy){return String(Math.max(0,gx)).padStart(5,'0')+' '+String(Math.max(0,gy)).padStart(5,'0');}
 
 const mapBounds=L.latLngBounds(
@@ -276,14 +281,15 @@ new L.TileLayer.InvertedY('Orlivka/LODS/{z}/{x}/{y}/tile.jpg',{
 map.setMaxBounds(mapBounds.pad(0.2));
 map.fitBounds(mapBounds);
 
-const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],html:
-  `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="14" cy="14" r="11" fill="${col}22" stroke="${col}" stroke-width="2"/>
-  <line x1="14" y1="1" x2="14" y2="9" stroke="${col}" stroke-width="1.5"/>
-  <line x1="14" y1="19" x2="14" y2="27" stroke="${col}" stroke-width="1.5"/>
-  <line x1="1" y1="14" x2="9" y2="14" stroke="${col}" stroke-width="1.5"/>
-  <line x1="19" y1="14" x2="27" y2="14" stroke="${col}" stroke-width="1.5"/>
-  <text x="14" y="18" text-anchor="middle" font-size="9" font-weight="bold" fill="${col}" font-family="Courier New">${lbl}</text>
+const mkIcon=(col,lbl)=>L.divIcon({className:'',iconSize:[32,32],iconAnchor:[16,16],html:
+  `<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="16" cy="16" r="7" fill="${col}33" stroke="${col}" stroke-width="2"/>
+  <circle cx="16" cy="16" r="2" fill="${col}"/>
+  <line x1="16" y1="0" x2="16" y2="10" stroke="${col}" stroke-width="1.5"/>
+  <line x1="16" y1="22" x2="16" y2="32" stroke="${col}" stroke-width="1.5"/>
+  <line x1="0" y1="16" x2="10" y2="16" stroke="${col}" stroke-width="1.5"/>
+  <line x1="22" y1="16" x2="32" y2="16" stroke="${col}" stroke-width="1.5"/>
+  <text x="16" y="14" text-anchor="middle" font-size="8" font-weight="bold" fill="${col}" font-family="Courier New">${lbl}</text>
   </svg>`});
 
 const GUN_ICON=mkIcon('#7eb34a','G'),TGT_ICON=mkIcon('#e05040','T');
@@ -334,34 +340,21 @@ function drawLine(){
 function clearG(){clearRings();if(gMkr){map.removeLayer(gMkr);gMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('gunCoord').textContent='Click map or type coords';document.getElementById('gunX').value='';document.getElementById('gunY').value='';}
 function clearT(){if(tMkr){map.removeLayer(tMkr);tMkr=null;}if(line){map.removeLayer(line);line=null;}document.getElementById('tgtCoord').textContent='—';document.getElementById('tgtX').value='';document.getElementById('tgtY').value='';}
 
-let staticMode=false,gunLocked=false,nextClick='gun';
+let nextClick='gun';
 
-function toggleMode(){
-  staticMode=!staticMode;
-  const b=document.getElementById('modeBadge');
-  if(staticMode){b.textContent='⬛ STATIC';b.classList.add('son');if(gMkr){gunLocked=true;nextClick='target';}else{gunLocked=false;nextClick='gun';}}
-  else{b.textContent='□ MOVING';b.classList.remove('son');gunLocked=false;nextClick=gMkr?'target':'gun';}
-  updateBanner();
-}
+
 function resetGun(){clearG();clearT();gunLocked=false;nextClick='gun';updateBanner();document.getElementById('resWrap').style.display='none';const fb=document.getElementById('fireBtn');if(fb)fb.style.display='none';}
-function updateBanner(){document.getElementById('clickBanner').textContent=nextClick==='gun'?'▶ CLICK — GUN POSITION':'▶ CLICK — TARGET POSITION';}
+function updateBanner(){} // banner is now static
 
-map.on('dblclick',function(e){
-  L.DomEvent.stop(e);
-  const gp=ll2g(e.latlng);
-  if(nextClick==='gun'){
-    setG(gp.x,gp.y);nextClick='target';if(staticMode)gunLocked=true;
-  } else {
-    setT(gp.x,gp.y);if(!staticMode)nextClick='gun';
-  }
-  updateBanner();
-});
 map.on('click',function(e){
   const gp=ll2g(e.latlng);
-  if(nextClick==='gun'){
-    setG(gp.x,gp.y);nextClick='target';if(staticMode)gunLocked=true;
+  if(e.originalEvent.ctrlKey){
+    // CTRL+click = set gun position
+    setG(gp.x,gp.y);
   } else {
-    setT(gp.x,gp.y);if(!staticMode)nextClick='gun';
+    // Regular click = set target position
+    if(gMkr) setT(gp.x,gp.y);
+    else { setG(gp.x,gp.y); } // if no gun yet, first click sets gun
   }
   updateBanner();
 });
@@ -484,8 +477,6 @@ const M777C=[
   {name:"Charge 5",col:"#854F0B",bg:"rgba(133,79,11,0.3)",t:[[3000,1271,52.2,7],[3100,1258,52.0,7],[3200,1244,51.8,7],[3300,1230,51.5,7],[3400,1216,51.3,7],[3500,1202,51.0,7],[3600,1187,50.7,7],[3700,1172,50.4,7],[3800,1156,50.1,8],[3900,1140,49.8,7],[4000,1124,49.4,8],[4100,1107,49.0,9],[4200,1089,48.6,9],[4300,1071,48.2,9],[4400,1052,47.7,9],[4500,1032,47.2,10],[4600,1011,46.7,10],[4700,989,46.1,10],[4800,966,45.5,11],[4900,941,44.7,12],[5000,913,44.0,13],[5100,883,43.1,14],[5200,850,42.0,16],[5300,809,40.7,20]]}
 ];
 const MORT={
-  m252:{label:"M252 (81mm)",wd:1.4,wr:1.8,c:[{n:"Charge 0",mn:73,mx:490,mv:69,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:200,mx:900,mv:109,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:400,mx:1500,mv:147,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:700,mx:2100,mv:185,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:1000,mx:3000,mv:225,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1500,mx:4000,mv:273,col:"#A32D2D",bg:"rgba(163,45,45,0.3)"},{n:"Charge 6",mn:2000,mx:5608,mv:320,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
-  m224:{label:"M224 (60mm)",wd:1.8,wr:2.2,c:[{n:"Charge 0",mn:40,mx:330,mv:55,col:"#3B6D11",bg:"rgba(59,109,17,0.3)"},{n:"Charge 1",mn:100,mx:600,mv:89,col:"#185FA5",bg:"rgba(24,95,165,0.3)"},{n:"Charge 2",mn:200,mx:900,mv:120,col:"#993C1D",bg:"rgba(153,60,29,0.3)"},{n:"Charge 3",mn:400,mx:1200,mv:150,col:"#534AB7",bg:"rgba(83,74,183,0.3)"},{n:"Charge 4",mn:700,mx:1800,mv:185,col:"#854F0B",bg:"rgba(133,79,11,0.3)"},{n:"Charge 5",mn:1000,mx:2490,mv:218,col:"#555550",bg:"rgba(85,85,80,0.3)"}]},
   "2b14":{label:"2B14 (82mm)",tableMode:true,shells:{
   "he":{name:"O-832DU HE",col:"#e05040",c:[
     {name:"Ring 0",col:"#3B6D11",bg:"rgba(59,109,17,0.3)",t:[
@@ -732,7 +723,7 @@ document.getElementById('wtabs').addEventListener('click',e=>{
   t.classList.add('on');aw=t.dataset.w;
   document.getElementById('shellRow').style.display=aw==='2b14'?'block':'none';
   document.getElementById('chargeLbl').textContent=aw==='2b14'?'Ring':aw==='bm21'?'Mode':'Charge';
-  buildCS();drawRings();
+  buildCS();setTimeout(drawRings,50);
   document.getElementById('resWrap').style.display='none';document.getElementById('err').style.display='none';lastRes=null;
 });
 document.getElementById('shellTabs').addEventListener('click',e=>{
